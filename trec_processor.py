@@ -12,5 +12,4 @@ with open(test_csv_path, 'r', encoding="utf-8") as original_file:
         next(tsv_reader, None)
         for query in tsv_reader:
             query.insert(1, 0)
-            if int(query[0]) % 2 == 1:
-                tsv_writer.writerow(query)
+            tsv_writer.writerow(query)

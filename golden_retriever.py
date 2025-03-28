@@ -7,6 +7,8 @@ from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer
 from collections import Counter
+from sentence_transformers import SentenceTransformer
+from sklearn.metrics.pairwise import cosine_similarity
 
 #############
 # Downloads
@@ -73,7 +75,7 @@ def extract_document_title_and_text(document):
     return f"{data['title']} + ' ' + {data['text']}".lower()
 
 def extract_query_text(query):
-    """ Extracts the title from a JSON-formatted query string.
+    """ Extracts the query from a JSON-formatted query string.
 
     Given a string representing a query in the original json format (with keys _id, text, and metadata),
     the function extracts the text and converts it to lowercase.
@@ -313,13 +315,33 @@ def rank(query, documents, bm25_matrix, inverted_index):
 # Retrieval and Ranking Pipeline
 #################################
 
-def load_and_rank(queries, include_text, result_name):
+def load_and_rank(include_text, result_name):
+    # Read in the query corpus and preprocess (TODO: update documentation--this was moved from main)
+
+    # Dictionary representing the queries by query id
+    # { query_id (int): list of tokens (list) }
+    queries = dict()
+    # { query_id (int): unprocessed content of query }
+    queries_unprocessed = dict()
+
+    # Read in queries
+    with open(query_path, 'r', encoding="utf-8") as query_corpus:
+        for query in query_corpus:
+            # Load in the query in json format
+            data = json.loads(query)
+            # Preprocess query text before saving
+            queries[data["_id"]] = preprocess_query(query)
+            # Extract the document title and text before assigning to dictionary
+            queries_unprocessed[data["_id"]] = extract_query_text(query)
+
     # Read in the document corpus and preprocess (step 1)
     start_time = time.time()
 
     # Dictionary representing the corpus by document id
     # { document_id (int): ( number of tokens (int), list of tokens (list) ) (tuple) }
     documents = dict()
+    # { document_id (int): unprocessed content of document }
+    documents_unprocessed = dict()
 
     # Read in corpus
     with open(corpus_path, 'r', encoding="utf-8") as corpus:
@@ -329,9 +351,14 @@ def load_and_rank(queries, include_text, result_name):
             if include_text:
                 # Preprocess document title and text before assigning to dictionary
                 documents[data["_id"]] = preprocess_document_title_and_text(document)
+                # Extract the document title and text before assigning to dictionary
+                documents_unprocessed[data["_id"]] = extract_document_title_and_text(document)
+
             else:
                 # Preprocess document title before assigning to dictionary
                 documents[data["_id"]] = preprocess_document_title(document)
+                # Extract the document title before assigning to dictionary
+                documents_unprocessed[data["_id"]] = extract_document_title(document)
 
     end_time = time.time()
     elapsed_time = end_time - start_time
@@ -362,24 +389,49 @@ def load_and_rank(queries, include_text, result_name):
     elapsed_time = end_time - start_time
     print(f"BM25 matrix creation time: {elapsed_time: .4f} second")
 
+    # Create the transformer model
+    model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+
     # Write the top 100 ranked documents for every test query to an output file
     start_time = time.time()
     with open(result_name, "w") as file:
         for query_id, query_content in queries.items():
-            if (int(query_id) % 2 == 1) :
-                # Obtain the ranked documents for the current query
-                ranked_documents = rank(query_content, documents, matrix, inverted_index)
+            # Obtain the ranked documents for the current query
+            ranked_documents = rank(query_content, documents, matrix, inverted_index)
+            
+            embeddings = []
+            # { document_id (int): cosine similarity between document and query based on embedding (int) }
+            similarities = dict()
+            # Encode the query using the transformer model
+            embedded_query = model.encode(queries_unprocessed[query_id])
 
-                # Take the top 100 documents and add them to the file
-                for i in range(100):
-                    document_id = ranked_documents[i][0]
-                    document_rank = i + 1
-                    document_score = ranked_documents[i][1]
-                    if include_text:
-                        tag = "text_included"
-                    else:
-                        tag = "title_only"
-                    file.write(f"{str(query_id)} Q0 {str(document_id)} {str(document_rank)} {str(document_score)} {tag}\n")
+            # Take the top 100 documents and rerank them using the transformer
+            for i in range(100):
+                document_id = ranked_documents[i][0]
+
+                # Use the transformer to encode the documents into vectors incorporating semantic information
+                # Note that we use the unprocessed version of the documents (to allow for semantic analysis)
+                embedding = model.encode(documents_unprocessed[document_id])
+                embeddings.append(embedding)
+
+                # Compute cosine similarity between encoded document and query
+                similarities[document_id] = cosine_similarity(embedded_query.reshape(1, -1), embeddings[i].reshape(1, -1))
+
+            # Rerank because on cosine similarities by
+            # sorting the dictionary in descending order by the items and storing it in a list
+            sorted_similarities = sorted(similarities.items(), key=lambda item: item[1], reverse=True)
+            # Write results to the file
+            for i in range(100):
+                document_id = sorted_similarities[i][0]
+                document_rank = i + 1
+                document_score = sorted_similarities[i][1]
+                if include_text:
+                    tag = "text_included"
+                else:
+                    tag = "title_only"
+                file.write(f"{str(query_id)} Q0 {str(document_id)} {str(document_rank)} {str(document_score)} {tag}\n")
+
+
 
     end_time = time.time()
     elapsed_time = end_time - start_time
@@ -400,22 +452,10 @@ if __name__ == "__main__":
     query_path = base_dir + query_filename
 
     
-    # Dictionary representing the queries by query id
-    # { query_id (int): list of tokens (list) }
-    queries = dict()
-
-    # Read in queries
-    with open(query_path, 'r', encoding="utf-8") as query_corpus:
-        for query in query_corpus:
-            # Load in the query in json format
-            data = json.loads(query)
-            # Preprocess query text before saving
-            queries[data["_id"]] = preprocess_query(query)
-    
     # Load the documents, create inverted index, and run ranking algorithm
 
     # Run on title and text
-    load_and_rank(queries, include_text=True, result_name="Results.txt")
+    load_and_rank(include_text=True, result_name="Results.txt")
 
     # Run on title only
-    load_and_rank(queries, include_text=False, result_name="Results_Title_Only.txt")
+    load_and_rank(include_text=False, result_name="Results_Title_Only.txt")
