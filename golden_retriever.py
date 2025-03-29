@@ -72,7 +72,11 @@ def extract_document_title_and_text(document):
     """
     data = json.loads(document)
     # Extract the title and text from document json, and make it lowercase
-    return f"{data['title']} + ' ' + {data['text']}".lower()
+    if data['title'][-1] == '.':
+        return f"{data['title']} {data['text']}".lower()
+    # If the title does not end with a period, add one before combining
+    else:
+        return f"{data['title']}. {data['text']}".lower()
 
 def extract_query_text(query):
     """ Extracts the query from a JSON-formatted query string.
@@ -396,6 +400,8 @@ def load_and_rank(include_text, result_name):
     start_time = time.time()
     with open(result_name, "w") as file:
         for query_id, query_content in queries.items():
+            print(f"processing query number {query_id}")
+
             # Obtain the ranked documents for the current query
             ranked_documents = rank(query_content, documents, matrix, inverted_index)
             
@@ -415,7 +421,7 @@ def load_and_rank(include_text, result_name):
                 embeddings.append(embedding)
 
                 # Compute cosine similarity between encoded document and query
-                similarities[document_id] = cosine_similarity(embedded_query.reshape(1, -1), embeddings[i].reshape(1, -1))
+                similarities[document_id] = cosine_similarity(embedded_query.reshape(1, -1), embeddings[i].reshape(1, -1))[0][0]
 
             # Rerank because on cosine similarities by
             # sorting the dictionary in descending order by the items and storing it in a list
@@ -458,4 +464,4 @@ if __name__ == "__main__":
     load_and_rank(include_text=True, result_name="Results.txt")
 
     # Run on title only
-    load_and_rank(include_text=False, result_name="Results_Title_Only.txt")
+    # load_and_rank(include_text=False, result_name="Results_Title_Only.txt")
