@@ -9,6 +9,10 @@ from nltk.stem import PorterStemmer
 from collections import Counter
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
+import torch
+
+device = "cuda" if torch.cuda.is_available() else "cpu"
+print(device)
 
 #############
 # Downloads
@@ -395,6 +399,10 @@ def load_and_rank(include_text, result_name):
 
     # Create the transformer model
     model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+    model.to(torch.device(device))
+
+    # Dictionary to cache embeddings
+    cached_embeddings = dict()
 
     # Write the top 100 ranked documents for every test query to an output file
     start_time = time.time()
@@ -409,7 +417,7 @@ def load_and_rank(include_text, result_name):
             # { document_id (int): cosine similarity between document and query based on embedding (int) }
             similarities = dict()
             # Encode the query using the transformer model
-            embedded_query = model.encode(queries_unprocessed[query_id])
+            embedded_query = model.encode(queries_unprocessed[query_id], device=device)
 
             # Take the top 100 documents and rerank them using the transformer
             for i in range(100):
@@ -417,7 +425,11 @@ def load_and_rank(include_text, result_name):
 
                 # Use the transformer to encode the documents into vectors incorporating semantic information
                 # Note that we use the unprocessed version of the documents (to allow for semantic analysis)
-                embedding = model.encode(documents_unprocessed[document_id])
+                if document_id not in cached_embeddings:
+                    embedding = model.encode(documents_unprocessed[document_id], device=device)
+                    cached_embeddings[document_id] = embedding
+                else:
+                    embedding = cached_embeddings[document_id]
                 embeddings.append(embedding)
 
                 # Compute cosine similarity between encoded document and query
