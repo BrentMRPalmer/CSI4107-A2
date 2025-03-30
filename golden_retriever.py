@@ -334,7 +334,7 @@ def load_and_rank():
 
     end_time = time.time()
     elapsed_time = end_time - start_time
-    print(f"Preprocessing time: {elapsed_time: .4f} second")
+    print(f"Preprocessing time: {elapsed_time: .4f} seconds")
 
     # Create inverted index (step 2)
     start_time = time.time()
@@ -343,7 +343,7 @@ def load_and_rank():
 
     end_time = time.time()
     elapsed_time = end_time - start_time
-    print(f"Inverted index creation time: {elapsed_time: .4f} second")
+    print(f"Inverted index creation time: {elapsed_time: .4f} seconds")
 
     # Retrieval and ranking (step 3)
     start_time = time.time()
@@ -359,8 +359,9 @@ def load_and_rank():
 
     end_time = time.time()
     elapsed_time = end_time - start_time
-    print(f"BM25 matrix creation time: {elapsed_time: .4f} second")
+    print(f"BM25 matrix creation time: {elapsed_time: .4f} seconds")
 
+    # List of sentence-transformers models that can be used
     # models = [
     #     "msmarco-bert-base-dot-v5",
     #     "multi-qa-MiniLM-L6-dot-v1",
@@ -400,9 +401,11 @@ def load_and_rank():
     #     "gtr-t5-xl"
     # ]
 
-    models = [
-        "msmarco-bert-base-dot-v5"
-    ]
+    # The best sentence-transformer model on scifact
+    models = ["all-mpnet-base-v1"]
+
+    # Make results directory
+    os.makedirs("results", exist_ok=True)
 
     for model_name in models:
         # Create the transformer model
@@ -415,9 +418,6 @@ def load_and_rank():
         # Write the top 100 ranked documents for every test query to an output file
         start_time = time.time()
 
-        # Make results directory
-        os.makedirs("results", exist_ok=True)
-
         with open(f"results/Results_{model_name}.txt", "w") as file:
             for query_id, query_content in queries.items():
                 print(f"processing query number {query_id}")
@@ -425,11 +425,10 @@ def load_and_rank():
                 # Obtain the ranked documents for the current query
                 ranked_documents = rank(query_content, documents, matrix, inverted_index)
                 
-                embeddings = []
                 # { document_id (int): cosine similarity between document and query based on embedding (int) }
                 similarities = dict()
                 # Encode the query using the transformer model
-                embedded_query = model.encode(queries_unprocessed[query_id], device=device)
+                embedded_query = model.encode(queries_unprocessed[query_id], device=device, convert_to_tensor=True)
 
                 # Take the top 100 documents and rerank them using the transformer
                 for i in range(100):
@@ -438,14 +437,13 @@ def load_and_rank():
                     # Use the transformer to encode the documents into vectors incorporating semantic information
                     # Note that we use the unprocessed version of the documents (to allow for semantic analysis)
                     if document_id not in cached_embeddings:
-                        embedding = model.encode(documents_unprocessed[document_id], device=device)
+                        embedding = model.encode(documents_unprocessed[document_id], device=device, convert_to_tensor=True)
                         cached_embeddings[document_id] = embedding
                     else:
                         embedding = cached_embeddings[document_id]
-                    embeddings.append(embedding)
 
                     # Compute cosine similarity between encoded document and query
-                    similarity = F.cosine_similarity(torch.tensor(embedded_query, device=device), torch.tensor(embedding, device=device), dim=0)
+                    similarity = F.cosine_similarity(embedded_query, embedding, dim=0)
                     similarities[document_id] = similarity.item()
 
                 # Rerank because on cosine similarities by
@@ -476,8 +474,5 @@ if __name__ == "__main__":
     query_filename = sys.argv[3] if len(sys.argv) >= 4 else "queries.jsonl"
     query_path = base_dir + query_filename
 
-    
     # Load the documents, create inverted index, and run ranking algorithm
-
-    # Run
     load_and_rank()
