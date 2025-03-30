@@ -158,7 +158,7 @@ This code begins by defining a global set of stopwords, a choice that provides c
 
 To prepare raw text, the program relies on Python’s `json.loads` function, converting JSON-formatted strings into dictionaries. This step makes it straightforward to extract specific fields from each document or query, such as `title`, `text`, or `query` content. Once the relevant fields are identified, the code normalizes them by converting every character to lowercase. It then uses NLTK’s `word_tokenize` function to split the text into tokens, isolating each meaningful unit. After tokenization, the code applies a filtering procedure to remove any token found in the global `stop_words` set, as well as any token that lacks at least one alphabetical character. This filtration process ensures that numbers, punctuation, and other such elements do not pollute the final token list.
 
-Finally, the code performs stemming using an NLTK `PorterStemmer` instance, reducing words to their base or root form. This transformation aims to unify variations of the same word—improving search or retrieval tasks where morphological differences should not matter. Dedicated functions, such as `preprocess_document_title_and_text`, `preprocess_document_title`, and `preprocess_query`, orchestrate this process. They each handle extraction of the relevant JSON fields (e.g., just `title` vs. `title` and `text`) and then pass the text through the lowercase, tokenize, remove-stopwords, and stem pipeline.
+Finally, the code performs stemming using an NLTK `PorterStemmer` instance, reducing words to their base or root form. This transformation aims to unify variations of the same word—improving search or retrieval tasks where morphological differences should not matter. Dedicated functions, including `preprocess_document` and `preprocess_query`, orchestrate this process. They each handle extraction of the relevant JSON fields and then pass the text through the lowercase, tokenize, remove-stopwords, and stem pipeline.
 
 #### Step 2: Indexing
 
@@ -178,11 +178,11 @@ The top 100 results for each query are re-ranked using neural methods. We genera
 
 #### Top 100 Results
 
-`load_and_rank` orchestrates the entire pipeline by reading and preprocessing the document corpus, constructing the inverted index, computing the BM25 matrix, processing each query by calling the `rank` function, and then re-ranking the output using neural methods. It takes the top 100 re-ranked documents for each processed query and writes the output to a file. The output records the query ID, document ID, rank position, cosine similarity score, and a tag indicating whether the ranking included “text_included” or “title_only” data.
+`load_and_rank` orchestrates the entire pipeline by reading and preprocessing the document corpus, constructing the inverted index, computing the BM25 matrix, processing each query by calling the `rank` function, and then re-ranking the output using neural methods. It takes the top 100 re-ranked documents for each processed query and writes the output to a file. The output records the query ID, document ID, rank position, cosine similarity score, and a tag indicating the neural model used.
 
 #### Optimizations in Model Inference
 
-We ran our model using PyTorch on an RTX 4080 GPU, which provided substantial compute for both embedding generation and reranking. To optimize performance and ensure consistent outputs during inference, we set the model to evaluation mode using `model.eval()`—this disabled dropout and other training-specific layers. We also wrapped inference code in `torch.no_grad()` blocks to avoid unnecessary gradient tracking and reduce memory usage.
+We ran our model using PyTorch on an RTX 4080 GPU, which provided substantial compute for both embedding generation and reranking. To run the computations on the GPU, we simply set the device to `cuda` as an input parameter to torch functions. If `cuda` is not available, it defaults to `cpu`. If running on a `Windows` system, we also set the process priority to `REALTIME_PRIORITY_CLASS` to improve processing time. For `cocodr-large-msmarco` specifically, to optimize performance and ensure consistent outputs during inference, we set the model to evaluation mode using `model.eval()`—this disabled dropout and other training-specific layers. We also wrapped inference code in `torch.no_grad()` blocks to avoid unnecessary gradient tracking and reduce memory usage.
 
 ### Trec Processor (Cleaning trec.tsv)
 
