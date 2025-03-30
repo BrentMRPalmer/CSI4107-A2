@@ -3,6 +3,7 @@ import json
 import time
 import math
 import sys
+from tqdm import tqdm
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer
@@ -420,9 +421,7 @@ def load_and_rank():
         start_time = time.time()
 
         with open(f"results/Results_{model_name}.txt", "w") as file:
-            for query_id, query_content in queries.items():
-                print(f"processing query number {query_id}")
-
+            for query_id, query_content in tqdm(queries.items(), desc=f"Query progress using {model_name}"):
                 # Obtain the ranked documents for the current query
                 ranked_documents = rank(query_content, documents, matrix, inverted_index)
                 
