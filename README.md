@@ -418,18 +418,11 @@ The model was pretrained on the BEIR corpus using Continuous Contrastive Learnin
 
 ## References
 
-Stopword removal (of english words): https://www.geeksforgeeks.org/removing-stop-words-nltk-python/ 
-
-command line args https://www.geeksforgeeks.org/command-line-arguments-in-python/ 
-
-Remove words without letters (numbers, symbols, etc.): https://www.w3schools.com/python/ref_string_isalpha.asp + https://www.w3schools.com/python/ref_func_any.asp 
-
-Porter stemming: https://www.geeksforgeeks.org/python-stemming-words-with-nltk/ 
-
-Sorted dictionary: https://www.datacamp.com/tutorial/sort-a-dictionary-by-value-python 
-
-Writing to tsv: https://medium.com/@nutanbhogendrasharma/creating-and-writing-to-different-type-of-files-in-python-6a2a1579bc25
-
-Read tsv:  https://www.geeksforgeeks.org/simple-ways-to-read-tsv-files-in-python/
-
+Stopword removal (of english words): https://www.geeksforgeeks.org/removing-stop-words-nltk-python/<br>
+command line args https://www.geeksforgeeks.org/command-line-arguments-in-python/<br>
+Remove words without letters (numbers, symbols, etc.): https://www.w3schools.com/python/ref_string_isalpha.asp + https://www.w3schools.com/python/ref_func_any.asp<br>
+Porter stemming: https://www.geeksforgeeks.org/python-stemming-words-with-nltk/<br>
+Sorted dictionary: https://www.datacamp.com/tutorial/sort-a-dictionary-by-value-python<br>
+Writing to tsv: https://medium.com/@nutanbhogendrasharma/creating-and-writing-to-different-type-of-files-in-python-6a2a1579bc25<br>
+Read tsv:  https://www.geeksforgeeks.org/simple-ways-to-read-tsv-files-in-python/<br>
 Best sentence transformer model: https://huggingface.co/sentence-transformers/all-mpnet-base-v1
