@@ -110,11 +110,12 @@ After the `load_and_rank` function calls the indexing function as step 2, step 3
 Firstly, a function takes the preprocessed document corpus, the inverted index, and the calculated average document length as input to
 compute a matrix that stores the BM25 score of every combination of term in our vocabulary with every document. To do so, each combination
 of term and document is sent to a function that calculates the BM25 score of the provided combination. Finally, the computed BM25 matrix is
-used to rank the documents. For each odd-numbered query (note that the assignment description specifies that we must only calculate the scores
-for odd-numbdered queries), a single method is called which takes the preprocessed query, the preprocessed document corpus,
+used to rank the documents. For querying, a single method is called which takes the preprocessed query, the preprocessed document corpus,
 the computed BM25 matrix, and the inverted_index as input, and computes the ranking. The score of a document is the sum of the BM25 scores 
-between each term in the query and the document. The function returns a list of tuples in the form (document_id, BM25_score), sorted by 
-BM25_score in descending order. This is the final ranking of all odd-numbered queries.
+between each term in the query and the document. The function produces a list of tuples in the form (document_id, BM25_score), sorted by 
+BM25_score in descending order. We then use a neural model re-rank these queries by generating query and document embeddings, utilizing 
+cosine similarity to determine relevance. The final ranked output is the re-ranked list of document ids sorted by cosine similarity in descending
+order.
 
 #### Top 100 Results
 
@@ -147,7 +148,6 @@ The Scifact dataset is available [here](https://public.ukp.informatik.tu-darmsta
 - Clean the `Scifact` `qrels` file `test.tsv` by running `trec_processor.py` with command line arguments.
     - Command Line Argument 1: The file path of the original `test.tsv` file (default is `./scifact/qrels/test.tsv`)
     - Command Line Argument 2: The target file path of the `formatted_test.tsv` file that will be generated (default is `./scifact/qrels/formatted_test.tsv`)
-    - Note: This "cleaning" filters the test file to only odd queries, as per the assignment instructions, and adds a `0` column, for compatibility
     with the `trec_eval` script.
     - Example: `python trec_processor.py ./scifact/qrels/test.tsv ./scifact/qrels/formatted_test.tsv`
 - Evaluate the `Results.txt` against the `formatted_test.tsv` file using `trec_eval` script.
@@ -312,10 +312,12 @@ classic
 link
 ```
 
+## Discussion of Results
+
 ### First 10 answers to the first 2 queries
 
 #### Query 1
-Below are the first 10 results of our information retrieval system for the first test query (note that the first odd query has ID 9). These were accessed from the `Results.txt` file, which contains the top 100 documents for every query.
+Below are the first 10 results of our information retrieval system for the first test query. These were accessed from the `Results.txt` file, which contains the top 100 documents for every query.
 
 Query 9 is `32% of liver transplantation programs required patients to discontinue methadone treatment in 2001.`
 ```
@@ -348,35 +350,21 @@ Query 11 is `4-PBA treatment raises endoplasmic reticulum stress in response to 
 11 Q0 8453819 10 12.419113157787327 text_included
 ```
 
-### Discussion of Results
 For the first query, the similarity score of document 44265107 is very high compared to the rest of the documents. From looking at the content of document 44265107 (titled "Liver transplantation and opioid dependence"), there are many mentions of variations of the phrase "liver transplant", which is the theme of the query.
 
 For the second query, the similarity scores are quite high for the top 10 documents. From observing the content of the documents, there appears to be overlap in their themes and the query theme, with moderate occurrences of phrases like "endoplasmic reticulum" and "stress".
 
-
-## Mean Average Precision (MAP) Score
+### Mean Average Precision (MAP) Score
 
 **Titles and Full Text:** 0.6310
 
 **Titles Only Run:** 0.4023
 
-### Discussion
-
 We obtain better results when we use the titles and the full text, as opposed to simply the titles. More specifically, the mean average precision is 22.87% higher when we include the text of the documents as well. 
 
 A possible reason is that the full text provides more context about the document. For example, the full text is more likely to be representative of the document content because it contains a wider variety of terms, thus casting a wider net to match with certain relevant terms in queries.
 
-## References
-Stopword removal (of english words): https://www.geeksforgeeks.org/removing-stop-words-nltk-python/ 
-command line args https://www.geeksforgeeks.org/command-line-arguments-in-python/ 
-Remove words without letters (numbers, symbols, etc.): https://www.w3schools.com/python/ref_string_isalpha.asp + https://www.w3schools.com/python/ref_func_any.asp 
-Porter stemming: https://www.geeksforgeeks.org/python-stemming-words-with-nltk/ 
-Sorted dictionary: https://www.datacamp.com/tutorial/sort-a-dictionary-by-value-python 
-Writing to tsv: https://medium.com/@nutanbhogendrasharma/creating-and-writing-to-different-type-of-files-in-python-6a2a1579bc25
-Read tsv:  https://www.geeksforgeeks.org/simple-ways-to-read-tsv-files-in-python/
-Best sentence transformer model: https://huggingface.co/sentence-transformers/all-mpnet-base-v1
-
-## Evaluation Results
+### Evaluation Results
 
 | Model Name          | MAP Score | P@10 |
 |---------------------|-----------|------|
@@ -433,3 +421,22 @@ Overall, sentence transformers do not improve the performance of our system, lea
 The best-performing model for our submission was ```OpenMatch/cocodr-large-msmarco```. The model is based on the BERT-large architecture, comprising 24 transformer layers with a hidden size of 1024, totaling approximately 335 million parameters. This deep architecture enables the model to capture intricate patterns and relationships within text data. 
 
 The model was pretrained on the BEIR corpus using Continuous Contrastive Learning (COCO). This method involves treating sequences from the same document as positive pairs and sequences from different documents as negative pairs, enhancing the model's ability to discern subtle semantic differences. Subsequently, the model was fine-tuned on the MS MARCO dataset employing implicit Distributionally Robust Optimization (iDRO). This technique dynamically adjusts the training focus on different query clusters, ensuring the model remains robust across various data distributions and performs well even on underrepresented query types.
+
+
+## References
+
+Stopword removal (of english words): https://www.geeksforgeeks.org/removing-stop-words-nltk-python/ 
+
+command line args https://www.geeksforgeeks.org/command-line-arguments-in-python/ 
+
+Remove words without letters (numbers, symbols, etc.): https://www.w3schools.com/python/ref_string_isalpha.asp + https://www.w3schools.com/python/ref_func_any.asp 
+
+Porter stemming: https://www.geeksforgeeks.org/python-stemming-words-with-nltk/ 
+
+Sorted dictionary: https://www.datacamp.com/tutorial/sort-a-dictionary-by-value-python 
+
+Writing to tsv: https://medium.com/@nutanbhogendrasharma/creating-and-writing-to-different-type-of-files-in-python-6a2a1579bc25
+
+Read tsv:  https://www.geeksforgeeks.org/simple-ways-to-read-tsv-files-in-python/
+
+Best sentence transformer model: https://huggingface.co/sentence-transformers/all-mpnet-base-v1
