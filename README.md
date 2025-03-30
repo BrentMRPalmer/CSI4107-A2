@@ -414,3 +414,17 @@ Read tsv:  https://www.geeksforgeeks.org/simple-ways-to-read-tsv-files-in-python
 
 > **MAP** = Mean Average Precision  
 > **P@10** = Precision at 10
+
+Sentence transformers encode sections of text into vectors that capture semantic meaning. We tested 36 different transformer models, obtaining MAP scores in the range of 0.3059 to 0.6289.
+
+The transformer that performed the best with respect to MAP was `all-mpnet-base-v1`, acheiving a score of 0.6289. This model encodes the documents into 768-dimensional dense vectors, allowing it to capture a high level of information. The model makes use of the pretrained `microsoft/mpnet-base model`, then fine-tunes it using a dataset consisting of 1 billion sentence pairs. The fine-tuning involves trying to predict the corresponding sentence given one of the sentences from a pair and refining based on the cross entropy loss. 
+
+Despite accounting for semantic meaning, the model does not acheive a higher MAP score than in Assignment 1 (0.6310).
+
+The model trains on text with a maximum word length of 128, while the average number of words of a document in our corpus is approximately 219 words. This discrepancy could explain the reduction in performance, since the reranking is optimized for shorter documents than what we provide.
+
+Overall, sentence transformers do not improve the performance of our system, leading us to look into other types of re-ranking models. **go into coco model (jay is writing this part)**
+
+References:
+
+best transformer: https://huggingface.co/sentence-transformers/all-mpnet-base-v1
