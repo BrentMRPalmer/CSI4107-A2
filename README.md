@@ -164,7 +164,9 @@ The Scifact dataset is available [here](https://public.ukp.informatik.tu-darmsta
 
 ## Description of Algorithms, Data Structures, and Optimizations
 
-### Golden Retriever
+### Golden Retriever 
+
+**We now have two files--both variants of Golden Retriver with specialized neural implementations. Both use the same base retrieval and ranking pipeline using BM25.**
 
 #### Step 1: Preprocessing
 
@@ -186,15 +188,17 @@ The retrieval phase begins with `compute_bm25`, a function that calculates the B
 
 Next, `compute_bm25_matrix` computes BM25 scores for every term in the vocabulary against every document. It outputs a nested dictionary (the BM25 matrix) where the top-level keys are terms, and each term maps to a dictionary keyed by document ID: BM25 score pairs. This precomputation makes subsequent queries faster, since lookups require only a direct index access rather than repeated BM25 calculations.
 
-The `rank` function then aggregates BM25 scores for a given query. It starts with a default score of zero for all documents, iterates over each query term, and sums that term’s BM25 score for any document that contains it. Documents that do not include the term are not updated. Finally, the function produces a sorted list of `(document_id, BM25_score)` tuples in descending order of their BM25 scores.
+The `rank` function then aggregates BM25 scores for a given query. It starts with a default score of zero for all documents, iterates over each query term, and sums that term’s BM25 score for any document that contains it. Documents that do not include the term are not updated. The function produces a sorted list of `(document_id, BM25_score)` tuples in descending order of their BM25 scores.
+
+The top 100 results for each query are re-ranked using neural methods. We generate embeddings for both the query and its top 100 results, utilizing a document embedding cache named ```cached_embeddings``` to improve performance. Our rationale is that throughout the retrieval and ranking process—across all queries—certain documents are likely to appear multiple times. In these cases, recomputing embeddings from scratch would be inefficient. The ```cached_embeddings``` cache is implemented using a dictionary.
 
 #### Top 100 Results
 
-`load_and_rank` orchestrates the entire pipeline by reading and preprocessing the document corpus, constructing the inverted index, computing the BM25 matrix, and then processing each query by calling the `rank` function on those queries whose IDs are odd. It takes the top 100 ranked documents for each processed query and writes the output to a file. The output records the query ID, document ID, rank position, BM25 score, and a tag indicating whether the ranking included “text_included” or “title_only” data. 
+`load_and_rank` orchestrates the entire pipeline by reading and preprocessing the document corpus, constructing the inverted index, computing the BM25 matrix, and then processing each query by calling the `rank` function on those queries whose IDs are odd. It takes the top 100 ranked documents for each processed query and writes the output to a file. The output records the query ID, document ID, rank position, cosine similarity score, and a tag indicating whether the ranking included “text_included” or “title_only” data. 
 
 ### Trec Processor (Cleaning trec.tsv)
 
-A tab-separated test set is read from a file while the header row is skipped. For each subsequent row, a zero is inserted into the second column, and the first column (representing the query ID) is converted to an integer to check if it is odd. Only rows with odd IDs are written to a new file. This process produces a reduced test set containing only the odd-numbered queries, formatted for TREC eval.
+A tab-separated test set is read from a file while the header row is skipped. For each subsequent row, a zero is inserted into the second column.
 
 ## Vocabulary
 
@@ -370,6 +374,7 @@ Porter stemming: https://www.geeksforgeeks.org/python-stemming-words-with-nltk/
 Sorted dictionary: https://www.datacamp.com/tutorial/sort-a-dictionary-by-value-python 
 Writing to tsv: https://medium.com/@nutanbhogendrasharma/creating-and-writing-to-different-type-of-files-in-python-6a2a1579bc25
 Read tsv:  https://www.geeksforgeeks.org/simple-ways-to-read-tsv-files-in-python/
+Best sentence transformer model: https://huggingface.co/sentence-transformers/all-mpnet-base-v1
 
 ## Evaluation Results
 
@@ -414,3 +419,17 @@ Read tsv:  https://www.geeksforgeeks.org/simple-ways-to-read-tsv-files-in-python
 
 > **MAP** = Mean Average Precision  
 > **P@10** = Precision at 10
+
+Transformer models encode sections of text into vectors that capture semantic meaning. We tested 36 different transformer models from the ```Sentence Transformers``` library, obtaining MAP scores in the range of 0.3059 to 0.6289.
+
+The transformer from the ```Sentence Transformers``` library that performed the best with respect to MAP was `all-mpnet-base-v1`, acheiving a score of 0.6289. This model encodes the documents into 768-dimensional dense vectors, allowing it to capture a high level of information. The model makes use of the pretrained `microsoft/mpnet-base model`, then fine-tunes it using a dataset consisting of 1 billion sentence pairs. The fine-tuning involves trying to predict the corresponding sentence given one of the sentences from a pair and refining based on the cross entropy loss. 
+
+Despite accounting for semantic meaning, the model does not acheive a higher MAP score than in Assignment 1 (0.6310).
+
+The model trains on text with a maximum word length of 128, while the average number of words of a document in our corpus is approximately 219 words. This discrepancy could explain the reduction in performance, since the reranking is optimized for shorter documents than what we provide.
+
+Overall, sentence transformers do not improve the performance of our system, leading us to look into other types of re-ranking models. 
+
+The best-performing model for our submission was ```OpenMatch/cocodr-large-msmarco```. The model is based on the BERT-large architecture, comprising 24 transformer layers with a hidden size of 1024, totaling approximately 335 million parameters. This deep architecture enables the model to capture intricate patterns and relationships within text data. 
+
+The model was pretrained on the BEIR corpus using Continuous Contrastive Learning (COCO). This method involves treating sequences from the same document as positive pairs and sequences from different documents as negative pairs, enhancing the model's ability to discern subtle semantic differences. Subsequently, the model was fine-tuned on the MS MARCO dataset employing implicit Distributionally Robust Optimization (iDRO). This technique dynamically adjusts the training focus on different query clusters, ensuring the model remains robust across various data distributions and performs well even on underrepresented query types.
