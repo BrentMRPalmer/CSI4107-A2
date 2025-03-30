@@ -13,8 +13,9 @@ import torch
 import torch.nn.functional as F
 import psutil, os
 
-p = psutil.Process()
-p.nice(psutil.REALTIME_PRIORITY_CLASS)
+if sys.platform == "win32":
+    p = psutil.Process()
+    p.nice(psutil.REALTIME_PRIORITY_CLASS)
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(device)
