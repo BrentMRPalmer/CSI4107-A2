@@ -370,3 +370,47 @@ Porter stemming: https://www.geeksforgeeks.org/python-stemming-words-with-nltk/
 Sorted dictionary: https://www.datacamp.com/tutorial/sort-a-dictionary-by-value-python 
 Writing to tsv: https://medium.com/@nutanbhogendrasharma/creating-and-writing-to-different-type-of-files-in-python-6a2a1579bc25
 Read tsv:  https://www.geeksforgeeks.org/simple-ways-to-read-tsv-files-in-python/
+
+## Evaluation Results
+
+| Model Name          | MAP Score | P@10 |
+|---------------------|-----------|------|
+| msmarco-bert-base-dot-v5             | 0.5508    | 0.0830 |
+| multi-qa-MiniLM-L6-dot-v1             | 0.5316    | 0.0803 |
+| sentence-t5-base             | 0.4491    | 0.0753 |
+| msmarco-distilbert-base-tas-b             | 0.5348    | 0.0810 |
+| msmarco-distilbert-dot-v5             | 0.5025    | 0.0783 |
+| paraphrase-distilroberta-base-v2             | 0.5791    | 0.0850 |
+| paraphrase-MiniLM-L12-v2             | 0.5661    | 0.0847 |
+| paraphrase-multilingual-mpnet-base-v2             | 0.4883    | 0.0790 |
+| paraphrase-TinyBERT-L6-v2             | 0.5478    | 0.0877 |
+| paraphrase-MiniLM-L6-v2             | 0.5156    | 0.0803 |
+| paraphrase-albert-small-v2             | 0.5227    | 0.0810 |
+| paraphrase-multilingual-MiniLM-L12-v2             | 0.4765    | 0.0770 |
+| paraphrase-MiniLM-L3-v2             | 0.4987    | 0.0777 |
+| distiluse-base-multilingual-cased-v1             | 0.4516    | 0.0727 |
+| distiluse-base-multilingual-cased-v2             | 0.4102    | 0.0697 |
+| average_word_embeddings_komninos             | 0.3136    | 0.0557 |
+| average_word_embeddings_glove.6B.300d             | 0.3059    | 0.0497 |
+| gtr-t5-large             | 0.6241    | 0.0870 |
+| all-mpnet-base-v1             | 0.6289    | 0.0927 |
+| multi-qa-mpnet-base-dot-v1             | 0.5771    | 0.0853 |
+| multi-qa-mpnet-base-cos-v1             | 0.5763    | 0.0880 |
+| all-roberta-large-v1             | 0.6179    | 0.0897 |
+| sentence-t5-xl             | 0.5097    | 0.0823 |
+| all-distilroberta-v1             | 0.5985    | 0.0890 |
+| all-MiniLM-L12-v1             | 0.6245    | 0.0907 |
+| all-MiniLM-L12-v2             | 0.5968    | 0.0897 |
+| multi-qa-distilbert-dot-v1             | 0.5853    | 0.0847 |
+| multi-qa-distilbert-cos-v1             | 0.5797    | 0.0840 |
+| gtr-t5-base             | 0.5834    | 0.0863 |
+| sentence-t5-large             | 0.5110    | 0.0800 |
+| all-MiniLM-L6-v2             | 0.6190    | 0.0903 |
+| multi-qa-MiniLM-L6-cos-v1             | 0.5381    | 0.0840 |
+| all-MiniLM-L6-v1             | 0.5889    | 0.0893 |
+| paraphrase-mpnet-base-v2             | 0.5637    | 0.0880 |
+| all-mpnet-base-v2             | 0.6254    | 0.0927 |
+| gtr-t5-xl             | 0.6247    | 0.0893 |
+
+> **MAP** = Mean Average Precision  
+> **P@10** = Precision at 10
