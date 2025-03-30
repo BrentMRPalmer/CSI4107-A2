@@ -425,6 +425,6 @@ The model trains on text with a maximum word length of 128, while the average nu
 
 Overall, sentence transformers do not improve the performance of our system, leading us to look into other types of re-ranking models. **go into coco model (jay is writing this part)**
 
-References:
+References used:
 
 best transformer: https://huggingface.co/sentence-transformers/all-mpnet-base-v1
