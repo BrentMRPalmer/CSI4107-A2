@@ -50,23 +50,7 @@ stemmer = PorterStemmer()
 # Step 1: Preprocessing
 ##########################
 
-def extract_document_title(document):
-    """ Extracts and concatenates the title from a JSON-formatted document string.
-    
-    Given a string representing the document in the original json format (with keys _id, title, text, and metadata),
-    the function extracts the title. It also converts the string to lowercase.
-
-    Args:
-        document (str): A JSON-formatted string representing a document with keys _id, title, text, and metadata.
-    
-    Returns:
-        str: A lowercase string containing the document title.
-    """
-    data = json.loads(document)
-    # Extract the title from document json, and make it lowercase
-    return f"{data['title']}".lower()
-
-def extract_document_title_and_text(document):
+def extract_document(document):
     """ Extracts and concatenates the title and text from a JSON-formatted document string.
     
     Given a string representing the document in the original json format (with keys _id, title, text, and metadata),
@@ -141,7 +125,7 @@ def stem(tokens):
         stemmed_tokens.append(stemmer.stem(token))
     return stemmed_tokens
 
-def preprocess_document_title_and_text(document):
+def preprocess_document(document):
     """ Processes a JSON-formatted document string by setting all characters to lowercase,
     tokenizing, removing stopwords, and stemming. Extracts both title and text.
 
@@ -153,25 +137,7 @@ def preprocess_document_title_and_text(document):
             int: Number of tokens.
             list: List of processed tokens.
     """
-    text_document = extract_document_title_and_text(document)
-    tokenized_document = word_tokenize(text_document) # Uses NLTK's function
-    filtered_document = remove_stopwords(tokenized_document)
-    stemmed = stem(filtered_document)
-    return (len(stemmed), stemmed)
-
-def preprocess_document_title(document):
-    """ Processes a JSON-formatted document string by setting all characters to lowercase,
-    tokenizing, removing stopwords, and stemming. Extracts title only.
-
-    Args:
-        document (str): The JSON-formatted document string to be processed.
-
-    Returns:
-        tuple:
-            int: Number of tokens.
-            list: List of processed tokens.
-    """
-    text_document = extract_document_title(document)
+    text_document = extract_document(document)
     tokenized_document = word_tokenize(text_document) # Uses NLTK's function
     filtered_document = remove_stopwords(tokenized_document)
     stemmed = stem(filtered_document)
@@ -328,7 +294,7 @@ def rank(query, documents, bm25_matrix, inverted_index):
 # Retrieval and Ranking Pipeline
 #################################
 
-def load_and_rank(include_text, result_name):
+def load_and_rank():
     # Read in the query corpus and preprocess (TODO: update documentation--this was moved from main)
 
     # Dictionary representing the queries by query id
@@ -361,17 +327,10 @@ def load_and_rank(include_text, result_name):
         for document in corpus:
             # Load in the document in json format
             data = json.loads(document)
-            if include_text:
-                # Preprocess document title and text before assigning to dictionary
-                documents[data["_id"]] = preprocess_document_title_and_text(document)
-                # Extract the document title and text before assigning to dictionary
-                documents_unprocessed[data["_id"]] = extract_document_title_and_text(document)
-
-            else:
-                # Preprocess document title before assigning to dictionary
-                documents[data["_id"]] = preprocess_document_title(document)
-                # Extract the document title before assigning to dictionary
-                documents_unprocessed[data["_id"]] = extract_document_title(document)
+            # Preprocess document title and text before assigning to dictionary
+            documents[data["_id"]] = preprocess_document(document)
+            # Extract the document title and text before assigning to dictionary
+            documents_unprocessed[data["_id"]] = extract_document(document)
 
     end_time = time.time()
     elapsed_time = end_time - start_time
@@ -442,20 +401,7 @@ def load_and_rank(include_text, result_name):
     # ]
 
     models = [
-        "sentence-t5-xl",
-        "all-distilroberta-v1",
-        "all-MiniLM-L12-v1",
-        "all-MiniLM-L12-v2",
-        "multi-qa-distilbert-dot-v1",
-        "multi-qa-distilbert-cos-v1",
-        "gtr-t5-base",
-        "sentence-t5-large",
-        "all-MiniLM-L6-v2",
-        "multi-qa-MiniLM-L6-cos-v1",
-        "all-MiniLM-L6-v1",
-        "paraphrase-mpnet-base-v2",
-        "all-mpnet-base-v2",
-        "gtr-t5-xl"
+        "msmarco-bert-base-dot-v5"
     ]
 
     for model_name in models:
@@ -472,9 +418,9 @@ def load_and_rank(include_text, result_name):
         # Make results directory
         os.makedirs("results", exist_ok=True)
 
-        with open(f"results/{result_name}_{model_name}.txt", "w") as file:
+        with open(f"results/Results_{model_name}.txt", "w") as file:
             for query_id, query_content in queries.items():
-                # print(f"processing query number {query_id}")
+                print(f"processing query number {query_id}")
 
                 # Obtain the ranked documents for the current query
                 ranked_documents = rank(query_content, documents, matrix, inverted_index)
@@ -510,10 +456,7 @@ def load_and_rank(include_text, result_name):
                     document_id = sorted_similarities[i][0]
                     document_rank = i + 1
                     document_score = sorted_similarities[i][1]
-                    if include_text:
-                        tag = "text_included"
-                    else:
-                        tag = "title_only"
+                    tag = model_name
                     file.write(f"{str(query_id)} Q0 {str(document_id)} {str(document_rank)} {str(document_score)} {tag}\n")
         end_time = time.time()
         elapsed_time = end_time - start_time
@@ -536,8 +479,5 @@ if __name__ == "__main__":
     
     # Load the documents, create inverted index, and run ranking algorithm
 
-    # Run on title and text
-    load_and_rank(include_text=True, result_name="Results")
-
-    # Run on title only
-    # load_and_rank(include_text=False, result_name="Results_Title_Only.txt")
+    # Run
+    load_and_rank()
