@@ -370,6 +370,7 @@ Porter stemming: https://www.geeksforgeeks.org/python-stemming-words-with-nltk/
 Sorted dictionary: https://www.datacamp.com/tutorial/sort-a-dictionary-by-value-python 
 Writing to tsv: https://medium.com/@nutanbhogendrasharma/creating-and-writing-to-different-type-of-files-in-python-6a2a1579bc25
 Read tsv:  https://www.geeksforgeeks.org/simple-ways-to-read-tsv-files-in-python/
+Best sentence transformer model: https://huggingface.co/sentence-transformers/all-mpnet-base-v1
 
 ## Evaluation Results
 
@@ -424,7 +425,3 @@ Despite accounting for semantic meaning, the model does not acheive a higher MAP
 The model trains on text with a maximum word length of 128, while the average number of words of a document in our corpus is approximately 219 words. This discrepancy could explain the reduction in performance, since the reranking is optimized for shorter documents than what we provide.
 
 Overall, sentence transformers do not improve the performance of our system, leading us to look into other types of re-ranking models. **go into coco model (jay is writing this part)**
-
-References used:
-
-best transformer: https://huggingface.co/sentence-transformers/all-mpnet-base-v1
