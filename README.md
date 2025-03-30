@@ -129,13 +129,12 @@ The Scifact dataset is available [here](https://public.ukp.informatik.tu-darmsta
   - Command Line Argument 1: The file path to the directory storing the `corpus.jsonl` and `queries.jsonl` files (default is `./scifact/`)
   - Command Line Argument 2: The name of the corpus json file (default `corpus.jsonl`)
   - Command Line Argument 3: The name of the query json file (default is `queries.jsonl`)
-  - Example: `python golden_retriever.py ./scifact/ corpus.jsonl queries.jsonl`
+  - Example: `python golden_retriever_sentence_transformer.py ./scifact/ corpus.jsonl queries.jsonl`
 - Clean the `Scifact` `qrels` file `test.tsv` by running `trec_processor.py` with command line arguments.
   - Command Line Argument 1: The file path of the original `test.tsv` file (default is `./scifact/qrels/test.tsv`)
   - Command Line Argument 2: The target file path of the `formatted_test.tsv` file that will be generated (default is `./scifact/qrels/formatted_test.tsv`)
-    with the `trec_eval` script.
   - Example: `python trec_processor.py ./scifact/qrels/test.tsv ./scifact/qrels/formatted_test.tsv`
-- Evaluate the `Results.txt` against the `formatted_test.tsv` file using `trec_eval` script.
+- Evaluate the `results/Results_model_name.txt` against the `formatted_test.tsv` file using `trec_eval` script.
   - In a Unix environment, download, extract, and build the `trec_eval` script using the following commands:
   <pre>
   wget https://trec.nist.gov/trec_eval/trec_eval_latest.tar.gz
@@ -143,9 +142,9 @@ The Scifact dataset is available [here](https://public.ukp.informatik.tu-darmsta
   cd trec_eval-9.0.7/
   make</pre>
   - Once the `trec_eval` script is built, it can be used with the following command line arguments:
-    - Command Line Argument 1: The file path of the `Results.txt` file
-    - Command Line Argument 2: The file path of the `formatted_test.tsv` file
-    - Example: `./trec_eval -m map /mnt/c/Season11/CSI4107/CSI4107-A1/scifact/qrels/formatted_test.tsv /mnt/c/Season11/CSI4107/CSI4107-A1/Results.txt`
+    - Command Line Argument 1: The file path of the `formatted_test.tsv` file
+    - Command Line Argument 2: The file path of the `results/Results_model_name.txt` file
+    - Example: `./trec_eval -m P.10 -m map /mnt/c/Season11/CSI4107/CSI4107-A1/scifact/qrels/formatted_test.tsv /mnt/c/Season11/CSI4107/CSI4107-A1/results/Results_model_name.txt`
 
 ## Description of Algorithms, Data Structures, and Optimizations
 
