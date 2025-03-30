@@ -8,8 +8,7 @@
 - [Functionality of Programs](#functionality-of-programs)
 - [How to Run](#how-to-run)
 - [Description of Algorithms, Data Structures, and Optimizations](#description-of-algorithms-data-structures-and-optimizations)
-- [Vocabulary](#vocabulary)
-- [Mean Average Precision (MAP) Score](#mean-average-precision-map-score)
+- [Discussion of Results](#discussion-of-results)
 - [References](#references)
 
 ## Names and Student Numbers
@@ -22,7 +21,7 @@ Natasa Bolic (300241734)
 
 Brent Palmer
 
-- Tested and documented results for the 36 sentence_transformer models
+- Tested and documented results for the 36 sentence transformer models
 - Code for document reranking using coco model
 - Report
 
@@ -41,7 +40,7 @@ Natasa Bolic
 
 ## Summary of Results
 
-We were able to improve our retrieval and ranking pipeline from A1 using neural based methods, resulting in a **MAP score to 0.6580** and **P@10 of 0.0927**.
+We were able to improve our retrieval and ranking pipeline from Assignment 1 using neural based methods (`cocodr-large-msmarco`), resulting in a **MAP score to 0.6580** and **P@10 of 0.0927**.
 
 ## Functionality of Programs
 
@@ -51,33 +50,29 @@ This section emphasizes a high-level description of the responsibilities, includ
 of each of the main stages in the programs. A discussion of the algorithms, data structures, and optimizations will be
 included in [Description of Algorithms, Data Structures, and Optimizations](#description-of-algorithms-data-structures-and-optimizations).
 
-The code is split into two files.
+The code is split into three files.
 
-- **golden_retriever.py**: The main python file that contains the entire information retrieval system, including preprocessing, indexing,
-  and retrieval and ranking.
+- **golden_retriever_sentence_transformer.py**: Retrieves documents using BM25, then reranks the top 100 documents using sentence transformers (36 possible models).
+- **golden_retriever_coco.py**: Retrieves documents using BM25, then reranks the top 100 documents using `cocodr-large-msmarco`.
 - **trec_processor.py**: An additional file that is used to clean the Scifact `test.tsv` file.
 
 ### Golden Retriever
 
-The main python file that contains the entire information retrieval system, including preprocessing, indexing,
-and retrieval and ranking is called `golden_retriever.py`. It also reads in the Scifact dataset corpus and queries,
-and outputs the ranked results in `Results.txt`.
+**We now have two golden retriever files—both variants of Golden Retriver with specialized neural implementations. Both use the same base retrieval and ranking pipeline using BM25.**
+
+The main python files that contain the entire information retrieval system, including preprocessing, indexing, retrieval and ranking, and re-ranking are the two variants of `golden_retriever.py`. They also read in the Scifact dataset corpus and queries, and output the ranked results in `results/Results_model_name.txt` where `model_name` is the name of the model. For the purposes of this description, any mention of `golden_retriever.py` refers to both `golden_retriever_sentence_transformer.py` and `golden_retriever_coco.py`.
 
 #### Entry Point (Main)
 
-The `golden_retriever.py` file beings in main, where it first reads the arguments representing the file paths
-of the corpus and the query. It then reads in, preprocesses (as described below in
-[Step 1: Preprocessing](#step-1-preprocessing)), and stores all of the queries. The queries are passed to the
-`load_and_rank` method, which is the pipeline that preprocesses, indexes, and retrieves and ranks the documents.
+The `golden_retriever.py` file begins in main, where it first reads the arguments representing the file paths
+of the corpus and the query. It then calls `load_and_rank` method, which is the pipeline that preprocesses, indexes, retrieves
+and ranks, and re-ranks (using neural methods) the documents.
 
-The `load_and_rank` is called twice, once to rank the documents using the title and text of the documents (results saved
-in `Results.txt`), and again to rank the documents using only the titles (results saved in `Results_Title_Only.txt`).
-
-Within `load_and_rank`, first the documents are read in and stored. Each document is preprocessed as described below in
-[Step 1: Preprocessing](#step-1-preprocessing) as it is read in. Then, the inverted index is created as described below
+Within `load_and_rank`, first the queries and documents are read in and stored. Each query and document is preprocessed as described below in
+[Step 1: Preprocessing](#step-1-preprocessing) as it is read in. We keep an unprocessed (just lowercase query and document text) version of both the queries and the documents to be used for the neural network. Note that the unprocessed version is required for the neural network to capture semantic information. For example, removing stopwords could change the semantic meaning of a sentence. Then, the inverted index is created as described below
 in [Step 2: Indexing](#step-2-indexing). Afterwards, a matrix containing all of the BM25 scores for each query and document is
 computed. Next, the documents are ranked for each of the queries. The matrix formation process and ranking is described in
-[Step 3: Retrieval and Ranking](#step-3-retrieval-and-ranking). The results are saved in the `Results.txt` or `Results_Title_Only.txt`
+[Step 3: Retrieval and Ranking](#step-3-retrieval-and-ranking). Finally, the top 100 results are re-ranked using neural methods, which is also described in Step 3. The results are saved in `results/Results_model_name.txt` where `model_name` is the name of the model.
 
 #### Step 1: Preprocessing
 
@@ -85,8 +80,7 @@ The preprocessing pipeline requires some global data that should only be initial
 at the start of the `golden_retriever.py` file. This includes the set of stopwords to be removed, as well as
 the NLTK stemmer.
 
-The preprocessing pipeline handles the preprocessing for both queries and documents. The queries call the pipeline from
-main, whereas the documents call this function as the first step of `load_and_rank`. For both queries and documents, a function that orchestrates
+The preprocessing pipeline handles the preprocessing for both queries and documents. For both queries and documents, a function that orchestrates
 the preprocessing pipeline is called. This method calls four different methods each with
 distinct responsibilities:
 
@@ -114,23 +108,12 @@ of term and document is sent to a function that calculates the BM25 score of the
 used to rank the documents. For querying, a single method is called which takes the preprocessed query, the preprocessed document corpus,
 the computed BM25 matrix, and the inverted_index as input, and computes the ranking. The score of a document is the sum of the BM25 scores
 between each term in the query and the document. The function produces a list of tuples in the form (document_id, BM25_score), sorted by
-BM25_score in descending order. We then use a neural model re-rank these queries by generating query and document embeddings, utilizing
-cosine similarity to determine relevance. The final ranked output is the re-ranked list of document ids sorted by cosine similarity in descending
-order.
-
-#### Top 100 Results
-
-Despite having calculated the final document ranking, the assignment requires one more step: filtering the top 100 documents for each query,
-and saving them to a file called `Results.txt`. Since the documents are ranked in sorted order, we simply loop over the first 100 documents
-in the ranked list of tuples, and save their values to `Results.txt`. The results stored in `Results.txt` can then be passed to the
-`trec_eval` script alongside the `formatted_test.tsv` file to compute the MAP score.
+BM25_score in descending order. We then use a neural model to re-rank the top 100 documents for each query by generating the corresponding query and document embeddings, utilizing cosine similarity to determine relevance. The final ranked output is the re-ranked list of document IDs sorted by cosine similarity in descending order. The top 100 results for each query are then saved to `results/Results_model_name.txt` where `model_name` is the name of the model. The results stored in `results/Results_model_name.txt` can then be passed to the `trec_eval` script alongside the `formatted_test.tsv` file to compute the MAP and P@10 scores.
 
 ### Trec Processor (Cleaning trec.tsv)
 
 There is a second program that cleans the provided `test.tsv` file. The original file is missing a column of zeroes, so it does not work
-with the `trec_eval` script. Furthermore, it includes even-numbered queries. Thus, the `trec_processor.py` file is used to process
-the `test.tsv` file, formatting it correctly such that it can be used with the `trec_eval` script. Having been passed the `test.tsv` file
-path as input and a target file path as output, a `formatted_test.tsv` file is generated which can be passed to `trec_eval`.
+with the `trec_eval` script. Thus, the `trec_processor.py` file is used to process the `test.tsv` file, formatting it correctly such that it can be used with the `trec_eval` script. Having been passed the `test.tsv` file path as input and a target file path as output, a `formatted_test.tsv` file is generated which can be passed to `trec_eval`.
 
 ## How to Run
 
@@ -168,7 +151,7 @@ The Scifact dataset is available [here](https://public.ukp.informatik.tu-darmsta
 
 ### Golden Retriever
 
-**We now have two files--both variants of Golden Retriver with specialized neural implementations. Both use the same base retrieval and ranking pipeline using BM25.**
+**We now have two files—both variants of Golden Retriver with specialized neural implementations. Both use the same base retrieval and ranking pipeline using BM25.**
 
 #### Step 1: Preprocessing
 
@@ -214,7 +197,7 @@ A tab-separated test set is read from a file while the header row is skipped. Fo
 
 ##### Query 1
 
-Below are the first 10 results of our best neural information retrieval system (`cocodr-large-msmarco`) for the query with id `1`. These were accessed from the `Results.txt` file, which contains the top 100 documents for every query.
+Below are the first 10 results of our best neural information retrieval system (`cocodr-large-msmarco`) for the query with ID `1`. These were accessed from the `Results.txt` file, which contains the top 100 documents for every query.
 
 Query 1 is `0-dimensional biomaterials show inductive properties.`
 
@@ -235,7 +218,7 @@ For the first query, the similarity scores of the top 10 documents are all quite
 
 ##### Query 3
 
-Below are the first 10 results of our best neural information retrieval system (`cocodr-large-msmarco`) for the query with id `3`. These were accessed from the `Results.txt` file, which contains the top 100 documents for every query.
+Below are the first 10 results of our best neural information retrieval system (`cocodr-large-msmarco`) for the query with ID `3`. These were accessed from the `Results.txt` file, which contains the top 100 documents for every query.
 
 Query 3 is `1,000 genomes project enables mapping of genetic sequence variation consisting of rare variants with larger penetrance effects than common variants.`
 
@@ -258,7 +241,7 @@ For the third query, the similarity scores are even higher than the first query 
 
 ##### Query 1
 
-Below are the first 10 results of our second best neural information retrieval system (`all-mpnet-base-v1`) for the query with id `1`. These were accessed from the `Results_all-mpnet-base-v1.txt` file, which contains the top 100 documents for every query.
+Below are the first 10 results of our second best neural information retrieval system (`all-mpnet-base-v1`) for the query with ID `1`. These were accessed from the `Results_all-mpnet-base-v1.txt` file, which contains the top 100 documents for every query.
 
 Query 1 is `0-dimensional biomaterials show inductive properties.`
 
@@ -279,7 +262,7 @@ For the first query, the similarity scores are all quite low, ranging from appro
 
 ##### Query 3
 
-Below are the first 10 results of our second best neural information retrieval system (`all-mpnet-base-v1`) for the query with id `3`. These were accessed from the `Results_all-mpnet-base-v1.txt` file, which contains the top 100 documents for every query.
+Below are the first 10 results of our second best neural information retrieval system (`all-mpnet-base-v1`) for the query with ID `3`. These were accessed from the `Results_all-mpnet-base-v1.txt` file, which contains the top 100 documents for every query.
 
 Query 3 is `1,000 genomes project enables mapping of genetic sequence variation consisting of rare variants with larger penetrance effects than common variants.`
 
@@ -300,9 +283,11 @@ Once again, the similarity scores are higher for query 3, ranging from approxima
 
 ### Evaluation Results (MAP and P@10 Score)
 
-We provide two tables summarizing the performance of our neural information retrieval systems, reporting both MAP and P@10. The first table shows the results of the top 2 models, while the second table covers all 37 tested models.
+We provide two tables summarizing the performance of our neural information retrieval systems, reporting both MAP and P@10. The first table shows the results of the top 2 models (`cocodr-large-msmarco` and `all-mpnet-base-v1`), while the second table covers all 37 tested models.
 
 #### Top 2 Model Results
+
+Our top 2 models are `cocodr-large-msmarco` and `all-mpnet-base-v1`. Their results are highlighted below.
 
 | Model Name           | MAP Score | P@10   |
 | -------------------- | --------- | ------ |
@@ -310,6 +295,8 @@ We provide two tables summarizing the performance of our neural information retr
 | all-mpnet-base-v1    | 0.6289    | 0.0927 |
 
 #### All Tested Model Results
+
+*We tested 36 sentence transformers and cocodr-large-msmarco.*
 
 | Model Name                            | MAP Score | P@10   |
 | ------------------------------------- | --------- | ------ |
@@ -356,15 +343,15 @@ We provide two tables summarizing the performance of our neural information retr
 
 Transformer models encode sections of text into vectors that capture semantic meaning. We tested 36 different transformer models from the `Sentence Transformers` library, obtaining MAP scores in the range of `0.3059` to `0.6289`.
 
-The transformer from the `Sentence Transformers` library that performed the best with respect to MAP was `all-mpnet-base-v1`, acheiving a score of `0.6289`. This model encodes the documents into 768-dimensional dense vectors, allowing it to capture a high level of information. The model makes use of the pretrained `microsoft/mpnet-base model`, then fine-tunes it using a dataset consisting of 1 billion sentence pairs. The fine-tuning involves trying to predict the corresponding sentence given one of the sentences from a pair and refining based on the cross entropy loss.
+The transformer from the `Sentence Transformers` library that performed the best with respect to MAP was `all-mpnet-base-v1`, acheiving a **MAP score of 0.6289** and a **P@10 of 0.0927**. This model encodes the documents into 768-dimensional dense vectors, allowing it to capture a high level of information. The model makes use of the pretrained `microsoft/mpnet-base model`, then fine-tunes it using a dataset consisting of 1 billion sentence pairs. The fine-tuning involves trying to predict the corresponding sentence given one of the sentences from a pair and refining based on the cross entropy loss.
 
-Despite accounting for semantic meaning, the model does not acheive a higher MAP score than in Assignment 1 (`0.6310`).
+Despite accounting for semantic meaning, the model does not acheive a higher MAP score than in Assignment 1 (`0.6310`), and does not achieve a higher precision score than in Assignment 1 (`0.0948`).
 
 The model trains on text with a maximum word length of 128, while the average number of words of a document in our corpus is approximately 219 words. This discrepancy could explain the reduction in performance, since the reranking is optimized for shorter documents than what we provide.
 
 Overall, sentence transformers do not improve the performance of our system, leading us to look into other types of re-ranking models.
 
-The **best-performing model** for our submission was `OpenMatch/cocodr-large-msmarco`, achieving a **MAP score of 0.6580** and **P@10 of 0.0927**. The model is based on the BERT-large architecture, comprising 24 transformer layers with a hidden size of 1024, totaling approximately 335 million parameters. This deep architecture enables the model to capture intricate patterns and relationships within text data.
+The **best-performing model** for our submission was `OpenMatch/cocodr-large-msmarco`, achieving a **MAP score of 0.6580** and a **P@10 of 0.0927**, which is a higher MAP score than in Assignment 1 (`0.6310`), but slightly lower precision score than in Assignment 1 (`0.0948`). The model is based on the BERT-large architecture, comprising 24 transformer layers with a hidden size of 1024, totaling approximately 335 million parameters. This deep architecture enables the model to capture intricate patterns and relationships within text data.
 
 The model was pretrained on the BEIR corpus using Continuous Contrastive Learning (COCO). This method involves treating sequences from the same document as positive pairs and sequences from different documents as negative pairs, enhancing the model's ability to discern subtle semantic differences. Subsequently, the model was fine-tuned on the MS MARCO dataset employing implicit Distributionally Robust Optimization (iDRO). This technique dynamically adjusts the training focus on different query clusters, ensuring the model remains robust across various data distributions and performs well even on underrepresented query types.
 
