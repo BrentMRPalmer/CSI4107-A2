@@ -194,7 +194,7 @@ The top 100 results for each query are re-ranked using neural methods. We genera
 
 #### Top 100 Results
 
-`load_and_rank` orchestrates the entire pipeline by reading and preprocessing the document corpus, constructing the inverted index, computing the BM25 matrix, and then processing each query by calling the `rank` function. It takes the top 100 ranked documents (and then re-ranked) for each processed query and writes the output to a file. The output records the query ID, document ID, rank position, cosine similarity score, and a tag indicating whether the ranking included “text_included” or “title_only” data. 
+`load_and_rank` orchestrates the entire pipeline by reading and preprocessing the document corpus, constructing the inverted index, computing the BM25 matrix, processing each query by calling the `rank` function, and then re-ranking the output using neural methods. It takes the top 100 re-ranked documents for each processed query and writes the output to a file. The output records the query ID, document ID, rank position, cosine similarity score, and a tag indicating whether the ranking included “text_included” or “title_only” data. 
 
 ### Trec Processor (Cleaning trec.tsv)
 
@@ -356,13 +356,6 @@ For the second query, the similarity scores are quite high for the top 10 docume
 
 ### Mean Average Precision (MAP) Score
 
-**Titles and Full Text:** 0.6310
-
-**Titles Only Run:** 0.4023
-
-We obtain better results when we use the titles and the full text, as opposed to simply the titles. More specifically, the mean average precision is 22.87% higher when we include the text of the documents as well. 
-
-A possible reason is that the full text provides more context about the document. For example, the full text is more likely to be representative of the document content because it contains a wider variety of terms, thus casting a wider net to match with certain relevant terms in queries.
 
 ### Evaluation Results
 
@@ -418,7 +411,7 @@ The model trains on text with a maximum word length of 128, while the average nu
 
 Overall, sentence transformers do not improve the performance of our system, leading us to look into other types of re-ranking models. 
 
-The best-performing model for our submission was ```OpenMatch/cocodr-large-msmarco```. The model is based on the BERT-large architecture, comprising 24 transformer layers with a hidden size of 1024, totaling approximately 335 million parameters. This deep architecture enables the model to capture intricate patterns and relationships within text data. 
+The best-performing model for our submission was ```OpenMatch/cocodr-large-msmarco```, achieving a MAP score of 0.6580 and P@10 of 0.0927. The model is based on the BERT-large architecture, comprising 24 transformer layers with a hidden size of 1024, totaling approximately 335 million parameters. This deep architecture enables the model to capture intricate patterns and relationships within text data. 
 
 The model was pretrained on the BEIR corpus using Continuous Contrastive Learning (COCO). This method involves treating sequences from the same document as positive pairs and sequences from different documents as negative pairs, enhancing the model's ability to discern subtle semantic differences. Subsequently, the model was fine-tuned on the MS MARCO dataset employing implicit Distributionally Robust Optimization (iDRO). This technique dynamically adjusts the training focus on different query clusters, ensuring the model remains robust across various data distributions and performs well even on underrepresented query types.
 
