@@ -35,7 +35,7 @@ Natasa Bolic
 
 ## Summary of Results
 
-We achieved a mean average precision score of 0.6310 using the BM25 approach.
+We were able to improve our retrieval and ranking pipeline from A1 using neural based methods, resulting in a **MAP score to 0.6580** and **P@10 of 0.0927**.
 
 ## Functionality of Programs
 
@@ -188,6 +188,9 @@ The top 100 results for each query are re-ranked using neural methods. We genera
 #### Top 100 Results
 
 `load_and_rank` orchestrates the entire pipeline by reading and preprocessing the document corpus, constructing the inverted index, computing the BM25 matrix, processing each query by calling the `rank` function, and then re-ranking the output using neural methods. It takes the top 100 re-ranked documents for each processed query and writes the output to a file. The output records the query ID, document ID, rank position, cosine similarity score, and a tag indicating whether the ranking included “text_included” or “title_only” data. 
+
+#### Optimizations in Model Inference
+We ran our model using PyTorch on an RTX 4080 GPU, which provided substantial compute for both embedding generation and reranking. To optimize performance and ensure consistent outputs during inference, we set the model to evaluation mode using ```model.eval()```—this disabled dropout and other training-specific layers. We also wrapped inference code in ```torch.no_grad()``` blocks to avoid unnecessary gradient tracking and reduce memory usage.
 
 ### Trec Processor (Cleaning trec.tsv)
 
