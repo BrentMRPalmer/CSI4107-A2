@@ -30,7 +30,7 @@ Jay Ghosh
 Natasa Bolic
 - Code for document reranking using sentence transformer
 - Code for document reranking using coco model
-- Trying new models (setence transformer, doc2vec, etc.)
+- Trying new models (sentence transformer, doc2vec, etc.)
 - Report
 
 ## Summary of Results
@@ -133,7 +133,7 @@ Install dependencies by running `pip install -r requirements.txt` in the root di
 The Scifact dataset is available [here](https://public.ukp.informatik.tu-darmstadt.de/thakur/BEIR/datasets/scifact.zip).
 
 ### Execution Instructions
-- Generate `Results.txt`, which contains the ranking results, by running `golden_retriever.py` with command line arguments.
+- Generate `results/Results_model_name.txt`, which contains the ranking results, by running `golden_retriever_sentence_transformer.py` or `golden_retriever_coco.py` with command line arguments. Please note that `golden_retriever_sentence_transformer.py` defaults to using the best model we found, `all-mpnet-base-v1`. Multiple models can be computed at once by changing the initialization of `models` on line 411. All models can be run by using the provided list on line 371.
     - Command Line Argument 1: The file path to the directory storing the `corpus.jsonl` and `queries.jsonl` files (default is `./scifact/`)
     - Command Line Argument 2: The name of the corpus json file (default `corpus.jsonl`)
     - Command Line Argument 3: The name of the query json file (default is `queries.jsonl`)
@@ -193,164 +193,102 @@ The top 100 results for each query are re-ranked using neural methods. We genera
 
 A tab-separated test set is read from a file while the header row is skipped. For each subsequent row, a zero is inserted into the second column.
 
-## Vocabulary
-
-### How big was the vocabulary?
-
-We ran `len(inverted_index)` to obtain the size of the vocabulary, and found that it contained 37975 terms.
-
-### Sample of 100 tokens from the vocabulary
-Below is a sample of 100 tokens from our vocabulary. To obtain these results, we ran a loop which iterates over the first 100 tokens in our inverted index and printed them.
-
-```
-microstructur
-develop
-human
-newborn
-cerebr
-white
-matter
-assess
-vivo
-diffus
-tensor
-magnet
-reson
-imag
-alter
-architectur
-brain
-affect
-cortic
-result
-function
-disabl
-line
-scan
-diffusion-weight
-mri
-sequenc
-analysi
-appli
-measur
-appar
-coeffici
-calcul
-rel
-anisotropi
-delin
-three-dimension
-fiber
-preterm
-full-term
-infant
-effect
-prematur
-earli
-gestat
-studi
-term
-central
-mean
-wk
-microm2/m
-decreas
-posterior
-limb
-intern
-capsul
-versu
-closer
-birth
-absolut
-valu
-area
-compar
-nonmyelin
-corpu
-callosum
-visibl
-mark
-differ
-organ
-data
-indic
-quantit
-water
-insight
-live
-induct
-myelodysplasia
-myeloid-deriv
-suppressor
-cell
-myelodysplast
-syndrom
-md
-age-depend
-stem
-malign
-share
-biolog
-featur
-activ
-adapt
-immun
-respons
-ineffect
-hematopoiesi
-report
-mdsc
-classic
-link
-```
-
 ## Discussion of Results
 
-### First 10 answers to the first 2 queries
+### First 10 answers to queries 1 and 3
 
-#### Query 1
-Below are the first 10 results of our information retrieval system for the first test query. These were accessed from the `Results.txt` file, which contains the top 100 documents for every query.
+#### Best Model: `cocodr-large-msmarco`
 
-Query 9 is `32% of liver transplantation programs required patients to discontinue methadone treatment in 2001.`
+##### Query 1
+Below are the first 10 results of our best neural information retrieval system (`cocodr-large-msmarco`) for the query with id `1`. These were accessed from the `Results.txt` file, which contains the top 100 documents for every query.
+
+Query 1 is `0-dimensional biomaterials show inductive properties.`
 ```
-9 Q0 44265107 1 18.958258391537722 text_included
-9 Q0 24700152 2 7.423023189374037 text_included
-9 Q0 25182647 3 6.6074423594848986 text_included
-9 Q0 16737210 4 6.412449606330081 text_included
-9 Q0 8190282 5 6.380871226577165 text_included
-9 Q0 14647747 6 6.191347824712254 text_included
-9 Q0 37699461 7 6.1785650232134355 text_included
-9 Q0 21859699 8 6.100003218989789 text_included
-9 Q0 28419824 9 5.822323687699198 text_included
-9 Q0 26105746 10 5.529571232935707 text_included
-```
-
-#### Query 2
-Below are the first 10 results of our information retrieval system for the second test query. These were accessed from the `Results.txt` file. These were accessed from the `Results.txt` file, which contains the top 100 documents for every query.
-
-Query 11 is `4-PBA treatment raises endoplasmic reticulum stress in response to general endoplasmic reticulum stress markers.`
-```
-11 Q0 25510546 1 17.37933522482014 text_included
-11 Q0 20904154 2 14.695012721017557 text_included
-11 Q0 13780287 3 14.39400930168742 text_included
-11 Q0 7482674 4 14.208599621494006 text_included
-11 Q0 32587939 5 14.160733088926552 text_included
-11 Q0 4399311 6 14.076685357651069 text_included
-11 Q0 29459383 7 13.871039001428388 text_included
-11 Q0 13958154 8 12.97664066012545 text_included
-11 Q0 19708993 9 12.767749957207569 text_included
-11 Q0 8453819 10 12.419113157787327 text_included
+1 Q0 17388232 1 0.927355170249939 cocodr-large-msmarco
+1 Q0 35008773 2 0.9252241849899292 cocodr-large-msmarco
+1 Q0 43385013 3 0.918635904788971 cocodr-large-msmarco
+1 Q0 37437064 4 0.9175436496734619 cocodr-large-msmarco
+1 Q0 10786948 5 0.9169590473175049 cocodr-large-msmarco
+1 Q0 7581911 6 0.9167959094047546 cocodr-large-msmarco
+1 Q0 1499964 7 0.9163487553596497 cocodr-large-msmarco
+1 Q0 16541762 8 0.9160013198852539 cocodr-large-msmarco
+1 Q0 21456232 9 0.915531575679779 cocodr-large-msmarco
+1 Q0 1855679 10 0.9155093431472778 cocodr-large-msmarco
 ```
 
-For the first query, the similarity score of document 44265107 is very high compared to the rest of the documents. From looking at the content of document 44265107 (titled "Liver transplantation and opioid dependence"), there are many mentions of variations of the phrase "liver transplant", which is the theme of the query.
+For the first query, the similarity scores of the top 10 documents are all quite high, ranging from `0.9155` to `0.9274`. From looking at the content of the highest ranked document, document `17388232` titled "Mechanical regulation of cell function with geometrically modulated elastomeric substrates," it appears to discuss the impact of elastomeric substrates on cells, specifically on their mechanical regulation. From our understanding, the query is about the impact of 0-dimensional biomaterials on cells, specifically on their inductive properties. Although these are not exactly the same topic, the query and the document both discuss interactions between cells and materials. This demonstrates the power of using models that can capture semantic meaning because despite the lack of matching keywords, they are identified as similar.
 
-For the second query, the similarity scores are quite high for the top 10 documents. From observing the content of the documents, there appears to be overlap in their themes and the query theme, with moderate occurrences of phrases like "endoplasmic reticulum" and "stress".
+##### Query 3
+Below are the first 10 results of our best neural information retrieval system (`cocodr-large-msmarco`) for the query with id `3`. These were accessed from the `Results.txt` file, which contains the top 100 documents for every query.
 
-### Mean Average Precision (MAP) Score
+Query 3 is `1,000 genomes project enables mapping of genetic sequence variation consisting of rare variants with larger penetrance effects than common variants.`
+```
+3 Q0 2739854 1 0.9574798345565796 cocodr-large-msmarco
+3 Q0 14717500 2 0.9471142888069153 cocodr-large-msmarco
+3 Q0 23389795 3 0.944831371307373 cocodr-large-msmarco
+3 Q0 32181055 4 0.9438236951828003 cocodr-large-msmarco
+3 Q0 19058822 5 0.940618097782135 cocodr-large-msmarco
+3 Q0 1388704 6 0.9366694092750549 cocodr-large-msmarco
+3 Q0 9196472 7 0.936307966709137 cocodr-large-msmarco
+3 Q0 1836154 8 0.9348548650741577 cocodr-large-msmarco
+3 Q0 10944947 9 0.9325252175331116 cocodr-large-msmarco
+3 Q0 41782935 10 0.9325160980224609 cocodr-large-msmarco
+```
 
+For the third query, the similarity scores are even higher than the first query for the top 10 documents, ranging from approximately `0.9325` to `0.9575`. From looking at the content of the highest ranked document, document `2739854` titled "Rare and common variants: twenty arguments," we observe that both the query and the document focus on rare versus common variants in genomes, noting that the effect of rare variants is larger than common variants. The topics appear to be very similar, which explains why the similarity score for the top document of this query is higher than the similarity score of the top document of the first query.
 
-### Evaluation Results
+#### Second Best Model: `all-mpnet-base-v1`
+
+##### Query 1
+Below are the first 10 results of our second best neural information retrieval system (`all-mpnet-base-v1`) for the query with id `1`. These were accessed from the `Results_all-mpnet-base-v1.txt` file, which contains the top 100 documents for every query.
+
+Query 1 is `0-dimensional biomaterials show inductive properties.`
+```
+1 Q0 17388232 1 0.3453291356563568 all-mpnet-base-v1
+1 Q0 21456232 2 0.26767271757125854 all-mpnet-base-v1
+1 Q0 1065627 3 0.2575644254684448 all-mpnet-base-v1
+1 Q0 19651306 4 0.24826312065124512 all-mpnet-base-v1
+1 Q0 12824568 5 0.2216578722000122 all-mpnet-base-v1
+1 Q0 17123657 6 0.20931318402290344 all-mpnet-base-v1
+1 Q0 10931595 7 0.20020157098770142 all-mpnet-base-v1
+1 Q0 4435369 8 0.15860764682292938 all-mpnet-base-v1
+1 Q0 10786948 9 0.15089626610279083 all-mpnet-base-v1
+1 Q0 21257564 10 0.14642101526260376 all-mpnet-base-v1
+```
+
+For the first query, the similarity scores are all quite low, ranging from approximately `0.1464` to `0.3453`. The highest ranked document, document `17388232` titled "Mechanical regulation of cell function with geometrically modulated elastomeric substrates," is the same as the highest ranked document from the best model. However, the score here is only `0.3453`, while the score from the best model is `0.9274`. The document that this model ranks as second highest, document `21456232` titled "A graphene-based platform for induced pluripotent stem cells culture and differentiation," is ranked 9th using the best model. This document also discusses the impact of a material (graphene) on cell behaviour, suggesting that it is a similar topic. This time, however, the document discusses the impact on a specific type of cell (induced pluripotent stem cells), showing that perhaps the document is slightly less relevant to the query.
+
+##### Query 3
+Below are the first 10 results of our second best neural information retrieval system (`all-mpnet-base-v1`) for the query with id `3`. These were accessed from the `Results_all-mpnet-base-v1.txt` file, which contains the top 100 documents for every query.
+
+Query 3 is `1,000 genomes project enables mapping of genetic sequence variation consisting of rare variants with larger penetrance effects than common variants.`
+```
+3 Q0 1388704 1 0.6403359174728394 all-mpnet-base-v1
+3 Q0 2739854 2 0.621632993221283 all-mpnet-base-v1
+3 Q0 23389795 3 0.601943850517273 all-mpnet-base-v1
+3 Q0 19058822 4 0.5938122868537903 all-mpnet-base-v1
+3 Q0 1544804 5 0.5918434262275696 all-mpnet-base-v1
+3 Q0 3662132 6 0.5870236158370972 all-mpnet-base-v1
+3 Q0 15153602 7 0.5730934143066406 all-mpnet-base-v1
+3 Q0 14717500 8 0.57110995054245 all-mpnet-base-v1
+3 Q0 13914198 9 0.5694984197616577 all-mpnet-base-v1
+3 Q0 10145528 10 0.5681357383728027 all-mpnet-base-v1
+```
+
+Once again, the similarity scores are higher for query 3, ranging from approximately `0.5681` to `0.6403`. The highest ranking document, document `1388704` titled "The essence of SNPs," was ranked 6th using the best model. Both the document and the query discuss genome variation, however, the document focuses on common variants (SNPs) while the query focuses on rare variants. This suggests that, although relevant, this document may not be as relevant as the document ranked first by the best model. However, the second highest ranking document, document `2739854` titled "Rare and common variants: twenty arguments," is actually the highest ranked document using the best model. These similar rankings between the two models are expected since the MAP scores of the two models are fairly similar and their P@10 scores are identical.
+
+### Evaluation Results (MAP and P@10 Score)
+
+We provide two tables summarizing the performance of our neural information retrieval systems, reporting both MAP and P@10. The first table shows the results of the top 2 models, while the second table covers all 37 tested models.
+
+#### Top 2 Model Results
+
+| Model Name          | MAP Score | P@10 |
+|---------------------|-----------|------|
+| cocodr-large-msmarco             | 0.6580    | 0.0927 |
+| all-mpnet-base-v1             | 0.6289    | 0.0927 |
+
+#### All Tested Model Results
 
 | Model Name          | MAP Score | P@10 |
 |---------------------|-----------|------|
@@ -390,24 +328,24 @@ For the second query, the similarity scores are quite high for the top 10 docume
 | paraphrase-mpnet-base-v2             | 0.5637    | 0.0880 |
 | all-mpnet-base-v2             | 0.6254    | 0.0927 |
 | gtr-t5-xl             | 0.6247    | 0.0893 |
+| cocodr-large-msmarco             | 0.6580    | 0.0927 |
 
 > **MAP** = Mean Average Precision  
 > **P@10** = Precision at 10
 
-Transformer models encode sections of text into vectors that capture semantic meaning. We tested 36 different transformer models from the ```Sentence Transformers``` library, obtaining MAP scores in the range of 0.3059 to 0.6289.
+Transformer models encode sections of text into vectors that capture semantic meaning. We tested 36 different transformer models from the ```Sentence Transformers``` library, obtaining MAP scores in the range of `0.3059` to `0.6289`.
 
-The transformer from the ```Sentence Transformers``` library that performed the best with respect to MAP was `all-mpnet-base-v1`, acheiving a score of 0.6289. This model encodes the documents into 768-dimensional dense vectors, allowing it to capture a high level of information. The model makes use of the pretrained `microsoft/mpnet-base model`, then fine-tunes it using a dataset consisting of 1 billion sentence pairs. The fine-tuning involves trying to predict the corresponding sentence given one of the sentences from a pair and refining based on the cross entropy loss. 
+The transformer from the `Sentence Transformers` library that performed the best with respect to MAP was `all-mpnet-base-v1`, acheiving a score of `0.6289`. This model encodes the documents into 768-dimensional dense vectors, allowing it to capture a high level of information. The model makes use of the pretrained `microsoft/mpnet-base model`, then fine-tunes it using a dataset consisting of 1 billion sentence pairs. The fine-tuning involves trying to predict the corresponding sentence given one of the sentences from a pair and refining based on the cross entropy loss. 
 
-Despite accounting for semantic meaning, the model does not acheive a higher MAP score than in Assignment 1 (0.6310).
+Despite accounting for semantic meaning, the model does not acheive a higher MAP score than in Assignment 1 (`0.6310`).
 
 The model trains on text with a maximum word length of 128, while the average number of words of a document in our corpus is approximately 219 words. This discrepancy could explain the reduction in performance, since the reranking is optimized for shorter documents than what we provide.
 
 Overall, sentence transformers do not improve the performance of our system, leading us to look into other types of re-ranking models. 
 
-The best-performing model for our submission was ```OpenMatch/cocodr-large-msmarco```, achieving a MAP score of 0.6580 and P@10 of 0.0927. The model is based on the BERT-large architecture, comprising 24 transformer layers with a hidden size of 1024, totaling approximately 335 million parameters. This deep architecture enables the model to capture intricate patterns and relationships within text data. 
+The best-performing model for our submission was `OpenMatch/cocodr-large-msmarco`, achieving a MAP score of 0.6580 and P@10 of 0.0927. The model is based on the BERT-large architecture, comprising 24 transformer layers with a hidden size of 1024, totaling approximately 335 million parameters. This deep architecture enables the model to capture intricate patterns and relationships within text data. 
 
 The model was pretrained on the BEIR corpus using Continuous Contrastive Learning (COCO). This method involves treating sequences from the same document as positive pairs and sequences from different documents as negative pairs, enhancing the model's ability to discern subtle semantic differences. Subsequently, the model was fine-tuned on the MS MARCO dataset employing implicit Distributionally Robust Optimization (iDRO). This technique dynamically adjusts the training focus on different query clusters, ensuring the model remains robust across various data distributions and performs well even on underrepresented query types.
-
 
 ## References
 
@@ -418,4 +356,20 @@ Porter stemming: https://www.geeksforgeeks.org/python-stemming-words-with-nltk/<
 Sorted dictionary: https://www.datacamp.com/tutorial/sort-a-dictionary-by-value-python<br>
 Writing to tsv: https://medium.com/@nutanbhogendrasharma/creating-and-writing-to-different-type-of-files-in-python-6a2a1579bc25<br>
 Read tsv:  https://www.geeksforgeeks.org/simple-ways-to-read-tsv-files-in-python/<br>
-Best sentence transformer model: https://huggingface.co/sentence-transformers/all-mpnet-base-v1
+Best sentence transformer model: https://huggingface.co/sentence-transformers/all-mpnet-base-v1 <br>
+Cuda: https://pytorch.org/docs/stable/cuda.html <br>
+psutil: https://psutil.readthedocs.io/en/latest/#processes <br>
+Process Priority: https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-setpriorityclass <br>
+system: https://docs.python.org/3/library/sys.html <br>
+tqdm: https://pypi.org/project/tqdm/#iterable-based <br>
+OpenMatch Coco usage: https://github.com/OpenMatch/COCO-DR?tab=readme-ov-file <br>
+Coco Hugging Face: https://huggingface.co/OpenMatch/cocodr-large-msmarco <br>
+Coco research paper: https://arxiv.org/abs/2210.15212 <br>
+Tokenizer: https://huggingface.co/docs/transformers/en/fast_tokenizers <br>
+Model eval: https://www.geeksforgeeks.org/what-does-model-eval-do-in-pytorch/ <br>
+Remove training mechanisms: https://pytorch.org/docs/stable/generated/torch.no_grad.html <br>
+Sentence transformers list: https://www.sbert.net/docs/sentence_transformer/pretrained_models.html <br>
+Sentence transformers usage: https://huggingface.co/sentence-transformers <br>
+Sentence transformer device, convert to tensor: https://sbert.net/docs/package_reference/sentence_transformer/SentenceTransformer.html <br>
+Model to CUDA: https://medium.com/%40transformergpt/how-to-convert-sentence-transformer-pytorch-models-to-onnx-with-the-right-pooling-method-61b1c83515d2 <br>
+Cosine similarity: https://pytorch.org/docs/stable/generated/torch.nn.functional.cosine_similarity.html <br>
