@@ -10,6 +10,11 @@ from collections import Counter
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 import torch
+import torch.nn.functional as F
+import psutil, os
+
+p = psutil.Process()
+p.nice(psutil.REALTIME_PRIORITY_CLASS)
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(device)
@@ -397,63 +402,122 @@ def load_and_rank(include_text, result_name):
     elapsed_time = end_time - start_time
     print(f"BM25 matrix creation time: {elapsed_time: .4f} second")
 
-    # Create the transformer model
-    model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
-    model.to(torch.device(device))
+    # models = [
+    #     "msmarco-bert-base-dot-v5",
+    #     "multi-qa-MiniLM-L6-dot-v1",
+    #     "sentence-t5-base",
+    #     "msmarco-distilbert-base-tas-b",
+    #     "msmarco-distilbert-dot-v5",
+    #     "paraphrase-distilroberta-base-v2",
+    #     "paraphrase-MiniLM-L12-v2",
+    #     "paraphrase-multilingual-mpnet-base-v2",
+    #     "paraphrase-TinyBERT-L6-v2",
+    #     "paraphrase-MiniLM-L6-v2",
+    #     "paraphrase-albert-small-v2",
+    #     "paraphrase-multilingual-MiniLM-L12-v2",
+    #     "paraphrase-MiniLM-L3-v2",
+    #     "distiluse-base-multilingual-cased-v1",
+    #     "distiluse-base-multilingual-cased-v2",
+    #     "average_word_embeddings_komninos",
+    #     "average_word_embeddings_glove.6B.300d",
+    #     "gtr-t5-large",
+    #     "all-mpnet-base-v1",
+    #     "multi-qa-mpnet-base-dot-v1",
+    #     "multi-qa-mpnet-base-cos-v1",
+    #     "all-roberta-large-v1",
+    #     "sentence-t5-xl",
+    #     "all-distilroberta-v1",
+    #     "all-MiniLM-L12-v1",
+    #     "all-MiniLM-L12-v2",
+    #     "multi-qa-distilbert-dot-v1",
+    #     "multi-qa-distilbert-cos-v1",
+    #     "gtr-t5-base",
+    #     "sentence-t5-large",
+    #     "all-MiniLM-L6-v2",
+    #     "multi-qa-MiniLM-L6-cos-v1",
+    #     "all-MiniLM-L6-v1",
+    #     "paraphrase-mpnet-base-v2",
+    #     "all-mpnet-base-v2",
+    #     "gtr-t5-xl"
+    # ]
 
-    # Dictionary to cache embeddings
-    cached_embeddings = dict()
+    models = [
+        "sentence-t5-xl",
+        "all-distilroberta-v1",
+        "all-MiniLM-L12-v1",
+        "all-MiniLM-L12-v2",
+        "multi-qa-distilbert-dot-v1",
+        "multi-qa-distilbert-cos-v1",
+        "gtr-t5-base",
+        "sentence-t5-large",
+        "all-MiniLM-L6-v2",
+        "multi-qa-MiniLM-L6-cos-v1",
+        "all-MiniLM-L6-v1",
+        "paraphrase-mpnet-base-v2",
+        "all-mpnet-base-v2",
+        "gtr-t5-xl"
+    ]
 
-    # Write the top 100 ranked documents for every test query to an output file
-    start_time = time.time()
-    with open(result_name, "w") as file:
-        for query_id, query_content in queries.items():
-            print(f"processing query number {query_id}")
+    for model_name in models:
+        # Create the transformer model
+        model = SentenceTransformer(model_name)
+        model.to(torch.device(device))
 
-            # Obtain the ranked documents for the current query
-            ranked_documents = rank(query_content, documents, matrix, inverted_index)
-            
-            embeddings = []
-            # { document_id (int): cosine similarity between document and query based on embedding (int) }
-            similarities = dict()
-            # Encode the query using the transformer model
-            embedded_query = model.encode(queries_unprocessed[query_id], device=device)
+        # Dictionary to cache embeddings
+        cached_embeddings = dict()
 
-            # Take the top 100 documents and rerank them using the transformer
-            for i in range(100):
-                document_id = ranked_documents[i][0]
+        # Write the top 100 ranked documents for every test query to an output file
+        start_time = time.time()
 
-                # Use the transformer to encode the documents into vectors incorporating semantic information
-                # Note that we use the unprocessed version of the documents (to allow for semantic analysis)
-                if document_id not in cached_embeddings:
-                    embedding = model.encode(documents_unprocessed[document_id], device=device)
-                    cached_embeddings[document_id] = embedding
-                else:
-                    embedding = cached_embeddings[document_id]
-                embeddings.append(embedding)
+        # Make results directory
+        os.makedirs("results", exist_ok=True)
 
-                # Compute cosine similarity between encoded document and query
-                similarities[document_id] = cosine_similarity(embedded_query.reshape(1, -1), embeddings[i].reshape(1, -1))[0][0]
+        with open(f"results/{result_name}_{model_name}.txt", "w") as file:
+            for query_id, query_content in queries.items():
+                # print(f"processing query number {query_id}")
 
-            # Rerank because on cosine similarities by
-            # sorting the dictionary in descending order by the items and storing it in a list
-            sorted_similarities = sorted(similarities.items(), key=lambda item: item[1], reverse=True)
-            # Write results to the file
-            for i in range(100):
-                document_id = sorted_similarities[i][0]
-                document_rank = i + 1
-                document_score = sorted_similarities[i][1]
-                if include_text:
-                    tag = "text_included"
-                else:
-                    tag = "title_only"
-                file.write(f"{str(query_id)} Q0 {str(document_id)} {str(document_rank)} {str(document_score)} {tag}\n")
+                # Obtain the ranked documents for the current query
+                ranked_documents = rank(query_content, documents, matrix, inverted_index)
+                
+                embeddings = []
+                # { document_id (int): cosine similarity between document and query based on embedding (int) }
+                similarities = dict()
+                # Encode the query using the transformer model
+                embedded_query = model.encode(queries_unprocessed[query_id], device=device)
 
+                # Take the top 100 documents and rerank them using the transformer
+                for i in range(100):
+                    document_id = ranked_documents[i][0]
 
+                    # Use the transformer to encode the documents into vectors incorporating semantic information
+                    # Note that we use the unprocessed version of the documents (to allow for semantic analysis)
+                    if document_id not in cached_embeddings:
+                        embedding = model.encode(documents_unprocessed[document_id], device=device)
+                        cached_embeddings[document_id] = embedding
+                    else:
+                        embedding = cached_embeddings[document_id]
+                    embeddings.append(embedding)
 
-    end_time = time.time()
-    elapsed_time = end_time - start_time
-    print(f"Query ranking time: {elapsed_time: .4f} second")
+                    # Compute cosine similarity between encoded document and query
+                    similarity = F.cosine_similarity(torch.tensor(embedded_query, device=device), torch.tensor(embedding, device=device), dim=0)
+                    similarities[document_id] = similarity.item()
+
+                # Rerank because on cosine similarities by
+                # sorting the dictionary in descending order by the items and storing it in a list
+                sorted_similarities = sorted(similarities.items(), key=lambda item: item[1], reverse=True)
+                # Write results to the file
+                for i in range(100):
+                    document_id = sorted_similarities[i][0]
+                    document_rank = i + 1
+                    document_score = sorted_similarities[i][1]
+                    if include_text:
+                        tag = "text_included"
+                    else:
+                        tag = "title_only"
+                    file.write(f"{str(query_id)} Q0 {str(document_id)} {str(document_rank)} {str(document_score)} {tag}\n")
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        print(f"Query ranking time for {model_name}: {elapsed_time: .4f} seconds")
 
 ##############
 # Entry Point
@@ -473,7 +537,7 @@ if __name__ == "__main__":
     # Load the documents, create inverted index, and run ranking algorithm
 
     # Run on title and text
-    load_and_rank(include_text=True, result_name="Results.txt")
+    load_and_rank(include_text=True, result_name="Results")
 
     # Run on title only
     # load_and_rank(include_text=False, result_name="Results_Title_Only.txt")
