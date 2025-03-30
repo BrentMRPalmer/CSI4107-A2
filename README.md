@@ -1,4 +1,4 @@
-# Assignment 1: Information Retrieval System
+# Assignment 2: Neural Information Retrieval System
 
 ## Table of Contents
 - [Names and Student Numbers](#names-and-student-numbers)
@@ -18,26 +18,19 @@ Natasa Bolic (300241734)
 
 ## Distribution of Work
 Brent Palmer
-- Step 1: Preprocessing
-- Step 2: Indexing
-- Step 3: Retrieval and Ranking
-- Cleaning test.tsv
-- Refactoring and Optimizations
-- Docstrings
+- Tested and documented results for the 36 sentence_transformer models
+- Code for document reranking using coco model
 - Report
 
 Jay Ghosh
-- Refactoring and Optimizations
-- Docstrings
+- Searching for effective models (coco, oai, etc.)
+- Code for document reranking using coco model
 - Report
 
 Natasa Bolic
-- Step 1: Preprocessing
-- Step 2: Indexing
-- Step 3: Retrieval and Ranking
-- Cleaning test.tsv
-- Top 100 results and results.txt
-- Running trec_eval
+- Code for document reranking using sentence transformer
+- Code for document reranking using coco model
+- Trying new models (setence transformer, doc2vec, etc.)
 - Report
 
 ## Summary of Results
