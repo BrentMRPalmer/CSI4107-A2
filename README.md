@@ -164,7 +164,9 @@ The Scifact dataset is available [here](https://public.ukp.informatik.tu-darmsta
 
 ## Description of Algorithms, Data Structures, and Optimizations
 
-### Golden Retriever
+### Golden Retriever 
+
+**We now have two files--both variants of Golden Retriver with specialized neural implementations. Both use the same base retrieval and ranking pipeline using BM25.**
 
 #### Step 1: Preprocessing
 
@@ -186,15 +188,17 @@ The retrieval phase begins with `compute_bm25`, a function that calculates the B
 
 Next, `compute_bm25_matrix` computes BM25 scores for every term in the vocabulary against every document. It outputs a nested dictionary (the BM25 matrix) where the top-level keys are terms, and each term maps to a dictionary keyed by document ID: BM25 score pairs. This precomputation makes subsequent queries faster, since lookups require only a direct index access rather than repeated BM25 calculations.
 
-The `rank` function then aggregates BM25 scores for a given query. It starts with a default score of zero for all documents, iterates over each query term, and sums that term’s BM25 score for any document that contains it. Documents that do not include the term are not updated. Finally, the function produces a sorted list of `(document_id, BM25_score)` tuples in descending order of their BM25 scores.
+The `rank` function then aggregates BM25 scores for a given query. It starts with a default score of zero for all documents, iterates over each query term, and sums that term’s BM25 score for any document that contains it. Documents that do not include the term are not updated. The function produces a sorted list of `(document_id, BM25_score)` tuples in descending order of their BM25 scores.
+
+The top 100 results for each query are re-ranked using neural methods. We generate embeddings for both the query and its top 100 results, utilizing a document embedding cache named ```cached_embeddings``` to improve performance. Our rationale is that throughout the retrieval and ranking process—across all queries—certain documents are likely to appear multiple times. In these cases, recomputing embeddings from scratch would be inefficient. The ```cached_embeddings``` cache is implemented using a dictionary.
 
 #### Top 100 Results
 
-`load_and_rank` orchestrates the entire pipeline by reading and preprocessing the document corpus, constructing the inverted index, computing the BM25 matrix, and then processing each query by calling the `rank` function on those queries whose IDs are odd. It takes the top 100 ranked documents for each processed query and writes the output to a file. The output records the query ID, document ID, rank position, BM25 score, and a tag indicating whether the ranking included “text_included” or “title_only” data. 
+`load_and_rank` orchestrates the entire pipeline by reading and preprocessing the document corpus, constructing the inverted index, computing the BM25 matrix, and then processing each query by calling the `rank` function on those queries whose IDs are odd. It takes the top 100 ranked documents for each processed query and writes the output to a file. The output records the query ID, document ID, rank position, cosine similarity score, and a tag indicating whether the ranking included “text_included” or “title_only” data. 
 
 ### Trec Processor (Cleaning trec.tsv)
 
-A tab-separated test set is read from a file while the header row is skipped. For each subsequent row, a zero is inserted into the second column, and the first column (representing the query ID) is converted to an integer to check if it is odd. Only rows with odd IDs are written to a new file. This process produces a reduced test set containing only the odd-numbered queries, formatted for TREC eval.
+A tab-separated test set is read from a file while the header row is skipped. For each subsequent row, a zero is inserted into the second column.
 
 ## Vocabulary
 
