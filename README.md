@@ -347,9 +347,6 @@ For the first query, the similarity score of document 44265107 is very high comp
 
 For the second query, the similarity scores are quite high for the top 10 documents. From observing the content of the documents, there appears to be overlap in their themes and the query theme, with moderate occurrences of phrases like "endoplasmic reticulum" and "stress".
 
-### Mean Average Precision (MAP) Score
-
-
 ### Evaluation Results
 
 | Model Name          | MAP Score | P@10 |
@@ -404,7 +401,7 @@ The model trains on text with a maximum word length of 128, while the average nu
 
 Overall, sentence transformers do not improve the performance of our system, leading us to look into other types of re-ranking models. 
 
-The best-performing model for our submission was ```OpenMatch/cocodr-large-msmarco```, achieving a MAP score of 0.6580 and P@10 of 0.0927. The model is based on the BERT-large architecture, comprising 24 transformer layers with a hidden size of 1024, totaling approximately 335 million parameters. This deep architecture enables the model to capture intricate patterns and relationships within text data. 
+The **best-performing model** for our submission was ```OpenMatch/cocodr-large-msmarco```, achieving a **MAP score of 0.6580** and **P@10 of 0.0927**. The model is based on the BERT-large architecture, comprising 24 transformer layers with a hidden size of 1024, totaling approximately 335 million parameters. This deep architecture enables the model to capture intricate patterns and relationships within text data. 
 
 The model was pretrained on the BEIR corpus using Continuous Contrastive Learning (COCO). This method involves treating sequences from the same document as positive pairs and sequences from different documents as negative pairs, enhancing the model's ability to discern subtle semantic differences. Subsequently, the model was fine-tuned on the MS MARCO dataset employing implicit Distributionally Robust Optimization (iDRO). This technique dynamically adjusts the training focus on different query clusters, ensuring the model remains robust across various data distributions and performs well even on underrepresented query types.
 
