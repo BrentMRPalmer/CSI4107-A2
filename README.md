@@ -280,7 +280,7 @@ Query 3 is `1,000 genomes project enables mapping of genetic sequence variation 
 
 Once again, the similarity scores are higher for query 3, ranging from approximately `0.5681` to `0.6403`. The highest ranking document, document `1388704` titled "The essence of SNPs," was ranked 6th using the best model. Both the document and the query discuss genome variation, however, the document focuses on common variants (SNPs) while the query focuses on rare variants. This suggests that, although relevant, this document may not be as relevant as the document ranked first by the best model. However, the second highest ranking document, document `2739854` titled "Rare and common variants: twenty arguments," is actually the highest ranked document using the best model. These similar rankings between the two models are expected since the MAP scores of the two models are fairly similar and their P@10 scores are identical.
 
-### Evaluation Results (MAP and P@10 Score)
+### Evaluation of Results (MAP and P@10 Score)
 
 We provide two tables summarizing the performance of our neural information retrieval systems, reporting both MAP and P@10. The first table shows the results of the top 2 models (`cocodr-large-msmarco` and `all-mpnet-base-v1`), while the second table covers all 37 tested models.
 
@@ -336,6 +336,8 @@ Our top 2 models are `cocodr-large-msmarco` and `all-mpnet-base-v1`. Their resul
 | all-mpnet-base-v2                     | 0.6254    | 0.0927 |
 | gtr-t5-xl                             | 0.6247    | 0.0893 |
 | cocodr-large-msmarco                  | 0.6580    | 0.0927 |
+
+*Note that all the results are included in the `results` folder, and the best result is stored in `Results.txt` in the root directory.*
 
 > **MAP** = Mean Average Precision  
 > **P@10** = Precision at 10
